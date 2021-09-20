@@ -1,2 +1,1 @@
-## Hey, this is Shopify profile readme 👋
-
+## Hello there, welcome to Shopify 👋
