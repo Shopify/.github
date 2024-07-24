@@ -1,5 +1,5 @@
 # Shopify Security Policy
 
-Shopify's [Bug Bounty program](https://www.shopify.com/bugbounty) rewards researchers for discovering security vulnerabilities.
+Shopify's [Bug Bounty program](https://www.shopify.com/bugbounty) is our way to reward security researchers for finding serious security vulnerabilities in our core application, Shopify. 
 
-You can submit a report via [HackerOne](https://hackerone.com/shopify).
+Shopify's Bug Bounty program is managed through HackerOne. Please report any vulnerabilities through our [HackerOne page](https://hackerone.com/shopify).
