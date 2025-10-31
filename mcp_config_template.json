@@ -1,0 +1,11 @@
+{
+  "mcpServers": {
+    "google": {
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-google"],
+      "env": {
+        "GOOGLE_APPLICATION_CREDENTIALS": "/path/to/your/credentials.json"
+      }
+    }
+  }
+}
