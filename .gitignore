@@ -1,0 +1,11 @@
+# Google MCP Credentials
+credentials.json
+*-credentials.json
+google-credentials*.json
+
+# MCP Configuration (may contain sensitive paths)
+mcp_settings.json
+claude_desktop_config.json
+
+# Backup files
+*.backup.*
