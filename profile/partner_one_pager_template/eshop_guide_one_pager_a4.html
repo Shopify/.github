@@ -1,0 +1,449 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Eshop Guide x Shopify x Shopify - One Pager</title>
+    <style>
+      :root {
+        --shopify-green: #95bf47;
+        --shopify-black: #212326;
+        --ink: #1c1f31;
+        --muted: #5c6a79;
+        --line: #d2d5d9;
+        --panel: #f6f6f7;
+        --page-padding: 12mm;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      @page {
+        size: A4;
+        margin: 0;
+      }
+
+      html,
+      body {
+        margin: 0;
+        width: 210mm;
+        height: 297mm;
+        font-family: Arial, Helvetica, sans-serif;
+        color: var(--ink);
+        background: #ffffff;
+        print-color-adjust: exact;
+        -webkit-print-color-adjust: exact;
+      }
+
+      .page {
+        width: 210mm;
+        height: 297mm;
+        padding: var(--page-padding);
+        display: grid;
+        grid-template-rows: auto auto 1fr auto;
+        gap: 3mm;
+      }
+
+      .top-accent {
+        height: 2.5mm;
+        background: linear-gradient(90deg, var(--shopify-green), #78a22f);
+        border-radius: 999px;
+      }
+
+      .hero {
+        border: 1px solid var(--line);
+        border-radius: 3mm;
+        background: var(--panel);
+        padding: 3.5mm 4mm;
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: 2.5mm;
+      }
+
+      .brand-row {
+        display: flex;
+        align-items: center;
+        gap: 2.5mm;
+      }
+
+      .partner-logo {
+        max-height: 9mm;
+        max-width: 68mm;
+        width: auto;
+      }
+
+      .shopify-logo {
+        max-height: 8mm;
+        width: auto;
+      }
+
+      .brand-divider {
+        color: var(--muted);
+        font-size: 4.4mm;
+        font-weight: 700;
+      }
+
+      h1 {
+        margin: 0;
+        font-size: 6.5mm;
+        line-height: 1.1;
+        color: var(--shopify-black);
+      }
+
+      .subtitle {
+        margin: 1mm 0 0;
+        font-size: 3.3mm;
+        color: var(--muted);
+      }
+
+      .meta-grid {
+        display: grid;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: 2mm;
+      }
+
+      .meta-card {
+        background: #ffffff;
+        border: 1px solid var(--line);
+        border-radius: 2.2mm;
+        padding: 2.2mm;
+      }
+
+      .meta-label {
+        font-size: 2.55mm;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        color: var(--muted);
+      }
+
+      .meta-value {
+        margin-top: 0.6mm;
+        font-size: 3.1mm;
+        line-height: 1.25;
+        font-weight: 700;
+      }
+
+      .content-grid {
+        display: grid;
+        grid-template-columns: 1.1fr 0.9fr;
+        gap: 3mm;
+        min-height: 0;
+      }
+
+      .column {
+        display: flex;
+        flex-direction: column;
+        gap: 3mm;
+        min-height: 0;
+      }
+
+      .section {
+        border: 1px solid var(--line);
+        border-radius: 2.6mm;
+        padding: 3mm;
+        background: #ffffff;
+      }
+
+      .section h2 {
+        margin: 0;
+        font-size: 4mm;
+        line-height: 1.2;
+        color: var(--shopify-black);
+      }
+
+      .section-note {
+        margin: 0.8mm 0 0;
+        font-size: 2.7mm;
+        color: var(--muted);
+      }
+
+      ul {
+        margin: 2.2mm 0 0 4.2mm;
+        padding: 0;
+      }
+
+      li {
+        margin: 0 0 1.4mm;
+        font-size: 3mm;
+        line-height: 1.28;
+      }
+
+      .icp-table {
+        margin-top: 2.2mm;
+        border: 1px solid var(--line);
+        border-radius: 2mm;
+        overflow: hidden;
+      }
+
+      .icp-row {
+        display: grid;
+        grid-template-columns: 34% 66%;
+        border-bottom: 1px solid var(--line);
+      }
+
+      .icp-row:last-child {
+        border-bottom: 0;
+      }
+
+      .icp-label {
+        background: var(--panel);
+        padding: 2mm 2.2mm;
+        font-size: 2.75mm;
+        font-weight: 700;
+      }
+
+      .icp-value {
+        padding: 2mm 2.2mm;
+        font-size: 2.75mm;
+        line-height: 1.35;
+      }
+
+      .story-list {
+        display: grid;
+        gap: 2mm;
+        margin-top: 2.2mm;
+      }
+
+      .story-card {
+        border: 1px solid var(--line);
+        border-left: 1.4mm solid var(--shopify-green);
+        border-radius: 2mm;
+        padding: 2mm 2.2mm;
+        background: #ffffff;
+      }
+
+      .story-heading h3 {
+        margin: 0;
+        font-size: 3.1mm;
+        color: var(--shopify-black);
+      }
+
+      .story-meta {
+        margin: 0.8mm 0 0;
+        font-size: 2.55mm;
+        color: var(--muted);
+        line-height: 1.25;
+      }
+
+      .story-summary {
+        margin: 1.4mm 0 0;
+        font-size: 2.75mm;
+        line-height: 1.3;
+      }
+
+      .metric-chip-row {
+        margin-top: 1.4mm;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 1mm;
+      }
+
+      .metric-chip {
+        display: inline-flex;
+        align-items: center;
+        background: #eef6dd;
+        color: #466b17;
+        border-radius: 999px;
+        padding: 0.65mm 1.5mm;
+        font-size: 2.45mm;
+        font-weight: 700;
+      }
+
+      .footer {
+        border: 1px solid var(--line);
+        border-radius: 2.6mm;
+        padding: 3mm;
+        background: #ffffff;
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 3mm;
+      }
+
+      .footer h2 {
+        margin: 0;
+        font-size: 3.8mm;
+        color: var(--shopify-black);
+      }
+
+      .contacts {
+        margin-top: 1.4mm;
+        display: grid;
+        gap: 1mm;
+      }
+
+      .contact-row {
+        display: grid;
+        grid-template-columns: 18mm 1fr;
+        gap: 1.4mm;
+        font-size: 2.9mm;
+      }
+
+      .contact-label {
+        font-weight: 700;
+        color: var(--shopify-black);
+      }
+
+      .contact-value {
+        color: var(--ink);
+      }
+
+      .cta {
+        margin-top: 1.6mm;
+        background: #eef6dd;
+        border-left: 1.4mm solid var(--shopify-green);
+        border-radius: 2mm;
+        padding: 1.8mm 2mm;
+        font-size: 2.95mm;
+        font-weight: 700;
+        line-height: 1.3;
+      }
+    </style>
+  </head>
+  <body>
+    <main class="page">
+      <div class="top-accent"></div>
+
+      <section class="hero">
+        <div class="brand-row">
+          <img class="partner-logo" src="file:///workspace/profile/partner_one_pager_template/assets/partner-logo-placeholder.svg" alt="Partner logo" />
+          <span class="brand-divider">×</span>
+          <img class="shopify-logo" src="file:///workspace/profile/partner_one_pager_template/assets/shopify-logo-full-color.svg" alt="Shopify logo" />
+        </div>
+        <div>
+          <h1>Eshop Guide x Shopify</h1>
+          <p class="subtitle">Mid-market execution engine for complex Shopify projects in DACH.</p>
+        </div>
+      </section>
+
+      <section class="meta-grid">
+        <article class="meta-card">
+          <div class="meta-label">Segment focus</div>
+          <div class="meta-value">Mid-market (DACH)</div>
+        </article>
+        <article class="meta-card">
+          <div class="meta-label">Region</div>
+          <div class="meta-value">Germany, Austria, Switzerland</div>
+        </article>
+        <article class="meta-card">
+          <div class="meta-label">Shopify partner since</div>
+          <div class="meta-value">2016</div>
+        </article>
+        <article class="meta-card">
+          <div class="meta-label">Team</div>
+          <div class="meta-value">45+ Shopify specialists</div>
+        </article>
+      </section>
+
+      <section class="content-grid">
+        <div class="column">
+          <article class="section">
+            <h2>Strengths</h2>
+            <p class="section-note">What makes your team a trusted Shopify execution partner.</p>
+            <ul><li>Shopify-first delivery model with standard-first architecture</li><li>Strong technical execution for complex IT and ERP environments</li><li>Fast pre-sales support in stakeholder and architecture calls</li><li>Enablement and growth services after go-live</li></ul>
+          </article>
+
+          <article class="section">
+            <h2>Capabilities</h2>
+            <p class="section-note">The implementation workstreams you deliver repeatedly.</p>
+            <ul><li>Migrations from Shopware, Salesforce Commerce, Magento, and custom stacks</li><li>B2B and D2C commerce implementations with custom logic where needed</li><li>ERP-critical integration projects across multi-store organizations</li><li>Post-launch optimization in UX, A/B testing, retention, and conversion</li></ul>
+          </article>
+
+          <article class="section">
+            <h2>Ideal Customer Profile</h2>
+            <p class="section-note">Who should engage you first and why.</p>
+            <div class="icp-table">
+            <div class="icp-row">
+              <div class="icp-label">Merchant stage</div>
+              <div class="icp-value">Scaling and mid-market merchants planning a strategic platform move.</div>
+            </div>
+            
+            <div class="icp-row">
+              <div class="icp-label">Complexity</div>
+              <div class="icp-value">Multiple systems, integrations, and cross-functional stakeholder groups.</div>
+            </div>
+            
+            <div class="icp-row">
+              <div class="icp-label">Business model</div>
+              <div class="icp-value">B2B, B2C, or hybrid operations with high reliability requirements.</div>
+            </div>
+            
+            <div class="icp-row">
+              <div class="icp-label">Decision criteria</div>
+              <div class="icp-value">Predictable delivery, clear budget guardrails, and business-value custom work.</div>
+            </div>
+            </div>
+          </article>
+        </div>
+
+        <div class="column">
+          <article class="section">
+            <h2>Success Stories</h2>
+            <p class="section-note">Use concise proof points with business outcomes.</p>
+            <div class="story-list">
+      <article class="story-card">
+        <div class="story-heading">
+          <h3>gloryfy</h3>
+          <p class="story-meta">Eyewear • Migrated from Custom</p>
+        </div>
+        <p class="story-summary">Migration for B2B/B2C with product configurator requirements.</p>
+        <div class="metric-chip-row"><span class="metric-chip">+315% mobile sales</span><span class="metric-chip">+10% conversion rate</span><span class="metric-chip">+20% revenue growth</span></div>
+      </article>
+    
+      <article class="story-card">
+        <div class="story-heading">
+          <h3>CHRIS sports</h3>
+          <p class="story-meta">Lifestyle / Sports • Migrated from Shopware</p>
+        </div>
+        <p class="story-summary">12 brand stores and operational complexity across multiple entities.</p>
+        <div class="metric-chip-row"><span class="metric-chip">+462% orders</span><span class="metric-chip">4 months to go-live</span><span class="metric-chip">-60% TCO after migration</span></div>
+      </article>
+    
+      <article class="story-card">
+        <div class="story-heading">
+          <h3>Ortlieb</h3>
+          <p class="story-meta">Outdoor • Migrated from Magento</p>
+        </div>
+        <p class="story-summary">8 stores and 10 ERP integrations with accelerated launch plan.</p>
+        <div class="metric-chip-row"><span class="metric-chip">12 weeks to go-live</span><span class="metric-chip">EUR 75M revenue in 2024</span><span class="metric-chip">+31% post-migration revenue</span></div>
+      </article>
+    </div>
+          </article>
+
+          <article class="section">
+            <h2>Delivery Parameters</h2>
+            <ul>
+              <li><strong>Typical budget:</strong> EUR 75k - EUR 200k initial project</li>
+              <li><strong>Implementation timeline:</strong> 3-6 months implementation</li>
+            </ul>
+          </article>
+        </div>
+      </section>
+
+      <section class="footer">
+        <div>
+          <h2>How to Engage</h2>
+          <ul><li>15-minute fit check followed by timeline and budget estimate</li><li>Technical and commercial alignment in IT, ERP, and leadership calls</li><li>Shared execution plan from implementation through growth optimization</li></ul>
+          <div class="cta">Get a fast feasibility, budget, and timeline assessment</div>
+        </div>
+        <div>
+          <h2>Contact</h2>
+          <div class="contacts">
+            <div class="contact-row">
+              <div class="contact-label">Slack</div>
+              <div class="contact-value">#shopify-eshop-guide-connect</div>
+            </div>
+            <div class="contact-row">
+              <div class="contact-label">Email</div>
+              <div class="contact-value">patrick@eshop-guide.de, oliver@eshop-guide.de</div>
+            </div>
+            <div class="contact-row">
+              <div class="contact-label">Website</div>
+              <div class="contact-value">https://eshop-guide.de</div>
+            </div>
+          </div>
+        </div>
+      </section>
+    </main>
+  </body>
+</html>

@@ -8,6 +8,7 @@ import html
 import json
 import shutil
 import subprocess
+import tempfile
 from pathlib import Path
 from typing import Any
 from urllib.parse import urlparse
@@ -503,23 +504,51 @@ def render_html(data: dict[str, Any], input_dir: Path, template_dir: Path) -> st
 
 
 def _build_pdf(html_path: Path, pdf_path: Path) -> None:
-    chrome_bin = shutil.which("google-chrome") or shutil.which("google-chrome-stable")
+    # Prefer the stable binary directly to avoid local wrapper scripts that
+    # force a shared user profile and can hang print-to-pdf commands.
+    chrome_bin = shutil.which("google-chrome-stable") or shutil.which("google-chrome")
     if not chrome_bin:
         raise RuntimeError(
             "Google Chrome was not found. Install Chrome or use --skip-pdf."
         )
 
-    command = [
-        chrome_bin,
-        "--headless=new",
-        "--disable-gpu",
-        "--no-sandbox",
-        "--allow-file-access-from-files",
-        "--no-pdf-header-footer",
-        f"--print-to-pdf={pdf_path}",
-        html_path.as_uri(),
-    ]
-    subprocess.run(command, check=True, capture_output=True, text=True)
+    with tempfile.TemporaryDirectory(prefix="chrome-pdf-") as tmp_dir:
+        user_data_dir = Path(tmp_dir) / "user-data"
+        user_data_dir.mkdir(parents=True, exist_ok=True)
+
+        command = [
+            chrome_bin,
+            "--headless=new",
+            "--disable-gpu",
+            "--no-sandbox",
+            "--disable-dev-shm-usage",
+            "--allow-file-access-from-files",
+            "--no-pdf-header-footer",
+            f"--user-data-dir={user_data_dir}",
+            f"--print-to-pdf={pdf_path}",
+            html_path.as_uri(),
+        ]
+        try:
+            result = subprocess.run(
+                command,
+                check=False,
+                capture_output=True,
+                text=True,
+                timeout=120,
+            )
+        except subprocess.TimeoutExpired as exc:
+            raise RuntimeError(
+                "Chrome timed out while generating the PDF. "
+                "Please simplify content or rerun."
+            ) from exc
+
+    if result.returncode != 0:
+        raise RuntimeError(
+            "Failed to generate PDF with Chrome.\n"
+            f"Command: {' '.join(command)}\n"
+            f"stdout: {result.stdout}\n"
+            f"stderr: {result.stderr}"
+        )
 
 
 def main() -> None:
