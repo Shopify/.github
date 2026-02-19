@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Generate an A4 Shopify partner one-pager from JSON data."""
+"""Generate themed A4 Shopify partner one-pagers from JSON data."""
 
 from __future__ import annotations
 
@@ -83,7 +83,24 @@ def _icp_rows(rows: list[dict[str, Any]]) -> str:
     return "".join(rendered_rows)
 
 
-def render_html(data: dict[str, Any], input_dir: Path, template_dir: Path) -> str:
+def _normalized_theme(theme: str) -> str:
+    normalized = (theme or "aurora").strip().lower()
+    return normalized if normalized in {"aurora", "slate", "graphite"} else "aurora"
+
+
+def render_html(
+    data: dict[str, Any],
+    input_dir: Path,
+    template_dir: Path,
+    theme: str = "aurora",
+) -> str:
+    theme_key = _normalized_theme(theme)
+    theme_label = {
+        "aurora": "Aurora",
+        "slate": "Slate",
+        "graphite": "Graphite",
+    }[theme_key]
+
     partner_logo = _to_uri(
         data.get("partner_logo_path", "assets/partner-logo-placeholder.svg"),
         input_dir=input_dir,
@@ -118,20 +135,227 @@ def render_html(data: dict[str, Any], input_dir: Path, template_dir: Path) -> st
     <title>{_escaped(data.get("partner_name", "Partner"))} x Shopify - One Pager</title>
     <style>
       :root {{
-        --shopify-green: #95bf47;
-        --ink-0: #0f1424;
-        --ink-1: #151b31;
-        --ink-2: #1c2544;
-        --ink-3: #28335c;
+        --page-padding: 10mm;
+      }}
+
+      body.theme-aurora {{
+        --body-bg: #101528;
+        --page-bg: radial-gradient(circle at 14% 8%, rgba(103, 84, 255, 0.27), transparent 32%),
+          radial-gradient(circle at 88% 6%, rgba(41, 201, 255, 0.2), transparent 29%),
+          radial-gradient(circle at 86% 96%, rgba(234, 78, 242, 0.16), transparent 32%),
+          linear-gradient(168deg, #101528 0%, #131a30 48%, #11162a 100%);
         --text-strong: #f5f8ff;
         --text-muted: #b8c2e3;
         --line: rgba(168, 177, 235, 0.38);
-        --violet: #6754ff;
-        --cyan: #29c9ff;
-        --teal: #33ede2;
-        --pink: #ea4ef2;
-        --green-bright: #70d50e;
-        --page-padding: 10mm;
+        --hero-bg: linear-gradient(150deg, rgba(32, 43, 76, 0.92) 0%, rgba(23, 30, 54, 0.94) 68%, rgba(21, 28, 49, 0.96) 100%);
+        --top-accent: linear-gradient(90deg, #95bf47 0%, #70d50e 22%, #33ede2 44%, #29c9ff 66%, #6754ff 84%, #ea4ef2 100%);
+        --logo-shell-bg: rgba(255, 255, 255, 0.96);
+        --logo-shell-border: rgba(210, 213, 217, 0.85);
+        --badge-bg: rgba(103, 84, 255, 0.2);
+        --badge-border: rgba(103, 84, 255, 0.48);
+        --badge-text: #ddd8ff;
+        --eyebrow: #a8b1eb;
+        --title: #ffffff;
+        --subtitle: #b8c2e3;
+        --meta-bg: rgba(28, 37, 68, 0.86);
+        --meta-label: #a8b1eb;
+        --meta-value: #ffffff;
+        --meta-accent-1: linear-gradient(90deg, #95bf47, #70d50e);
+        --meta-accent-2: linear-gradient(90deg, #29c9ff, #33ede2);
+        --meta-accent-3: linear-gradient(90deg, #6754ff, #423eff);
+        --meta-accent-4: linear-gradient(90deg, #ea4ef2, #ff7bc4);
+        --section-base-bg: rgba(28, 37, 68, 0.82);
+        --section-strengths-bg: linear-gradient(155deg, rgba(112, 213, 14, 0.18) 0%, rgba(28, 37, 68, 0.9) 50%, rgba(28, 37, 68, 0.84) 100%);
+        --section-capabilities-bg: linear-gradient(155deg, rgba(103, 84, 255, 0.18) 0%, rgba(28, 37, 68, 0.9) 52%, rgba(28, 37, 68, 0.84) 100%);
+        --section-icp-bg: linear-gradient(155deg, rgba(51, 237, 226, 0.16) 0%, rgba(28, 37, 68, 0.9) 52%, rgba(28, 37, 68, 0.84) 100%);
+        --section-stories-bg: linear-gradient(155deg, rgba(41, 201, 255, 0.18) 0%, rgba(28, 37, 68, 0.9) 46%, rgba(28, 37, 68, 0.84) 100%);
+        --section-delivery-bg: linear-gradient(155deg, rgba(234, 78, 242, 0.16) 0%, rgba(28, 37, 68, 0.9) 54%, rgba(28, 37, 68, 0.84) 100%);
+        --section-tech-bg: linear-gradient(155deg, rgba(41, 201, 255, 0.14) 0%, rgba(28, 37, 68, 0.9) 56%, rgba(28, 37, 68, 0.84) 100%);
+        --heading: #ffffff;
+        --section-note: #a8b1eb;
+        --list-text: #e4e9ff;
+        --bullet-bg: linear-gradient(135deg, #95bf47, #33ede2);
+        --icon-strengths-bg: linear-gradient(135deg, #95bf47, #70d50e);
+        --icon-capabilities-bg: linear-gradient(135deg, #423eff, #6754ff);
+        --icon-icp-bg: linear-gradient(135deg, #1cd9d9, #33ede2);
+        --icon-stories-bg: linear-gradient(135deg, #29c9ff, #00b4cd);
+        --icon-delivery-bg: linear-gradient(135deg, #ea4ef2, #6754ff);
+        --icon-tech-bg: linear-gradient(135deg, #29c9ff, #6754ff);
+        --icon-engage-bg: linear-gradient(135deg, #95bf47, #33ede2);
+        --icon-contact-bg: linear-gradient(135deg, #6754ff, #ea4ef2);
+        --icon-stroke: #ffffff;
+        --icp-label-bg: rgba(168, 177, 235, 0.14);
+        --icp-label-text: #ebeeff;
+        --icp-value-text: #dde3ff;
+        --story-card-bg: rgba(20, 27, 49, 0.78);
+        --story-border: rgba(168, 177, 235, 0.42);
+        --story-left-1: #95bf47;
+        --story-left-2: #29c9ff;
+        --story-left-3: #ea4ef2;
+        --story-meta: #a8b1eb;
+        --story-summary: #dde3ff;
+        --metric-chip-bg-1: rgba(112, 213, 14, 0.2);
+        --metric-chip-border-1: rgba(112, 213, 14, 0.38);
+        --metric-chip-text-1: #d5f8a6;
+        --metric-chip-bg-2: rgba(41, 201, 255, 0.18);
+        --metric-chip-border-2: rgba(41, 201, 255, 0.36);
+        --metric-chip-text-2: #baf0ff;
+        --metric-chip-bg-3: rgba(234, 78, 242, 0.18);
+        --metric-chip-border-3: rgba(234, 78, 242, 0.36);
+        --metric-chip-text-3: #ffd1fd;
+        --tech-chip-bg: rgba(103, 84, 255, 0.2);
+        --tech-chip-border: rgba(103, 84, 255, 0.45);
+        --tech-chip-text: #ddd8ff;
+        --footer-bg: rgba(28, 37, 68, 0.82);
+        --contact-text: #dde3ff;
+        --cta-bg: linear-gradient(130deg, rgba(149, 191, 71, 0.22) 0%, rgba(51, 237, 226, 0.18) 58%, rgba(41, 201, 255, 0.2) 100%);
+        --cta-border: rgba(149, 191, 71, 0.45);
+        --cta-text: #f3ffd5;
+      }}
+
+      body.theme-slate {{
+        --body-bg: #cdd1d8;
+        --page-bg: linear-gradient(164deg, #d9dbe0 0%, #cfd2d8 45%, #c3c7cf 100%);
+        --text-strong: #171a20;
+        --text-muted: #596272;
+        --line: rgba(45, 52, 66, 0.2);
+        --hero-bg: linear-gradient(145deg, rgba(255, 255, 255, 0.74) 0%, rgba(247, 249, 252, 0.76) 100%);
+        --top-accent: linear-gradient(90deg, #95bf47 0%, #8591a3 48%, #495061 100%);
+        --logo-shell-bg: rgba(255, 255, 255, 0.95);
+        --logo-shell-border: rgba(62, 69, 82, 0.26);
+        --badge-bg: rgba(57, 62, 73, 0.1);
+        --badge-border: rgba(57, 62, 73, 0.24);
+        --badge-text: #2e3440;
+        --eyebrow: #5f6777;
+        --title: #151821;
+        --subtitle: #454e5f;
+        --meta-bg: rgba(255, 255, 255, 0.66);
+        --meta-label: #5f6777;
+        --meta-value: #171a20;
+        --meta-accent-1: linear-gradient(90deg, #343944, #545b68);
+        --meta-accent-2: linear-gradient(90deg, #60697a, #7c8596);
+        --meta-accent-3: linear-gradient(90deg, #95bf47, #6d9340);
+        --meta-accent-4: linear-gradient(90deg, #4b5363, #333943);
+        --section-base-bg: rgba(255, 255, 255, 0.62);
+        --section-strengths-bg: linear-gradient(155deg, rgba(149, 191, 71, 0.16) 0%, rgba(255, 255, 255, 0.72) 48%, rgba(255, 255, 255, 0.62) 100%);
+        --section-capabilities-bg: linear-gradient(155deg, rgba(104, 117, 140, 0.16) 0%, rgba(255, 255, 255, 0.72) 48%, rgba(255, 255, 255, 0.62) 100%);
+        --section-icp-bg: linear-gradient(155deg, rgba(110, 124, 143, 0.14) 0%, rgba(255, 255, 255, 0.72) 50%, rgba(255, 255, 255, 0.62) 100%);
+        --section-stories-bg: linear-gradient(155deg, rgba(137, 147, 166, 0.16) 0%, rgba(255, 255, 255, 0.72) 46%, rgba(255, 255, 255, 0.62) 100%);
+        --section-delivery-bg: linear-gradient(155deg, rgba(113, 123, 138, 0.14) 0%, rgba(255, 255, 255, 0.72) 56%, rgba(255, 255, 255, 0.62) 100%);
+        --section-tech-bg: linear-gradient(155deg, rgba(88, 96, 112, 0.14) 0%, rgba(255, 255, 255, 0.72) 56%, rgba(255, 255, 255, 0.62) 100%);
+        --heading: #171a20;
+        --section-note: #5d6678;
+        --list-text: #232a38;
+        --bullet-bg: linear-gradient(135deg, #95bf47, #6d9340);
+        --icon-strengths-bg: linear-gradient(135deg, #95bf47, #6d9340);
+        --icon-capabilities-bg: linear-gradient(135deg, #687085, #4b5262);
+        --icon-icp-bg: linear-gradient(135deg, #7f8899, #626b7c);
+        --icon-stories-bg: linear-gradient(135deg, #8b95a8, #6f7788);
+        --icon-delivery-bg: linear-gradient(135deg, #666f82, #4a5261);
+        --icon-tech-bg: linear-gradient(135deg, #7c8595, #5c6576);
+        --icon-engage-bg: linear-gradient(135deg, #95bf47, #667280);
+        --icon-contact-bg: linear-gradient(135deg, #6d7484, #4b5261);
+        --icon-stroke: #ffffff;
+        --icp-label-bg: rgba(50, 56, 70, 0.09);
+        --icp-label-text: #222a39;
+        --icp-value-text: #30384b;
+        --story-card-bg: rgba(255, 255, 255, 0.74);
+        --story-border: rgba(63, 70, 83, 0.22);
+        --story-left-1: #95bf47;
+        --story-left-2: #6d7484;
+        --story-left-3: #404654;
+        --story-meta: #5f6879;
+        --story-summary: #31394a;
+        --metric-chip-bg-1: rgba(149, 191, 71, 0.18);
+        --metric-chip-border-1: rgba(109, 147, 64, 0.4);
+        --metric-chip-text-1: #3a571e;
+        --metric-chip-bg-2: rgba(109, 116, 132, 0.15);
+        --metric-chip-border-2: rgba(109, 116, 132, 0.32);
+        --metric-chip-text-2: #3d4454;
+        --metric-chip-bg-3: rgba(72, 80, 96, 0.16);
+        --metric-chip-border-3: rgba(72, 80, 96, 0.32);
+        --metric-chip-text-3: #2f3542;
+        --tech-chip-bg: rgba(62, 70, 84, 0.1);
+        --tech-chip-border: rgba(62, 70, 84, 0.24);
+        --tech-chip-text: #2f3748;
+        --footer-bg: rgba(255, 255, 255, 0.64);
+        --contact-text: #2f3748;
+        --cta-bg: linear-gradient(130deg, rgba(149, 191, 71, 0.2) 0%, rgba(255, 255, 255, 0.66) 100%);
+        --cta-border: rgba(109, 147, 64, 0.42);
+        --cta-text: #2f4a15;
+      }}
+
+      body.theme-graphite {{
+        --body-bg: #151922;
+        --page-bg: radial-gradient(circle at 85% 10%, rgba(130, 145, 170, 0.14), transparent 34%),
+          linear-gradient(168deg, #151922 0%, #171d29 52%, #141925 100%);
+        --text-strong: #f1f4fb;
+        --text-muted: #b6bfd1;
+        --line: rgba(178, 186, 200, 0.34);
+        --hero-bg: linear-gradient(150deg, rgba(36, 44, 59, 0.92) 0%, rgba(28, 35, 49, 0.94) 100%);
+        --top-accent: linear-gradient(90deg, #95bf47 0%, #78a63a 26%, #7a889f 66%, #9faac0 100%);
+        --logo-shell-bg: rgba(250, 252, 255, 0.96);
+        --logo-shell-border: rgba(198, 205, 218, 0.88);
+        --badge-bg: rgba(130, 145, 170, 0.2);
+        --badge-border: rgba(130, 145, 170, 0.44);
+        --badge-text: #e4eaf6;
+        --eyebrow: #c2c9d8;
+        --title: #ffffff;
+        --subtitle: #c5ccdc;
+        --meta-bg: rgba(34, 41, 55, 0.86);
+        --meta-label: #b3bccd;
+        --meta-value: #ffffff;
+        --meta-accent-1: linear-gradient(90deg, #95bf47, #7ea93b);
+        --meta-accent-2: linear-gradient(90deg, #6e7f9c, #8b9dbc);
+        --meta-accent-3: linear-gradient(90deg, #5c6f8e, #7a8faf);
+        --meta-accent-4: linear-gradient(90deg, #798395, #a0aabe);
+        --section-base-bg: rgba(34, 41, 55, 0.82);
+        --section-strengths-bg: linear-gradient(155deg, rgba(149, 191, 71, 0.18) 0%, rgba(34, 41, 55, 0.9) 50%, rgba(34, 41, 55, 0.84) 100%);
+        --section-capabilities-bg: linear-gradient(155deg, rgba(95, 111, 142, 0.2) 0%, rgba(34, 41, 55, 0.9) 52%, rgba(34, 41, 55, 0.84) 100%);
+        --section-icp-bg: linear-gradient(155deg, rgba(122, 143, 175, 0.16) 0%, rgba(34, 41, 55, 0.9) 52%, rgba(34, 41, 55, 0.84) 100%);
+        --section-stories-bg: linear-gradient(155deg, rgba(112, 126, 152, 0.2) 0%, rgba(34, 41, 55, 0.9) 46%, rgba(34, 41, 55, 0.84) 100%);
+        --section-delivery-bg: linear-gradient(155deg, rgba(120, 130, 148, 0.18) 0%, rgba(34, 41, 55, 0.9) 54%, rgba(34, 41, 55, 0.84) 100%);
+        --section-tech-bg: linear-gradient(155deg, rgba(95, 109, 136, 0.18) 0%, rgba(34, 41, 55, 0.9) 56%, rgba(34, 41, 55, 0.84) 100%);
+        --heading: #ffffff;
+        --section-note: #b8c1d2;
+        --list-text: #e6ebf7;
+        --bullet-bg: linear-gradient(135deg, #95bf47, #a3b2cc);
+        --icon-strengths-bg: linear-gradient(135deg, #95bf47, #7ea93b);
+        --icon-capabilities-bg: linear-gradient(135deg, #5f6f8e, #8696b3);
+        --icon-icp-bg: linear-gradient(135deg, #7b89a1, #a3afc5);
+        --icon-stories-bg: linear-gradient(135deg, #6b7d9c, #8fa1bf);
+        --icon-delivery-bg: linear-gradient(135deg, #7f8a9f, #a7b2c7);
+        --icon-tech-bg: linear-gradient(135deg, #6b7d9c, #8ea1c0);
+        --icon-engage-bg: linear-gradient(135deg, #95bf47, #8696b3);
+        --icon-contact-bg: linear-gradient(135deg, #707c94, #95a4bd);
+        --icon-stroke: #ffffff;
+        --icp-label-bg: rgba(174, 186, 207, 0.16);
+        --icp-label-text: #eff3fb;
+        --icp-value-text: #e1e7f5;
+        --story-card-bg: rgba(24, 31, 43, 0.78);
+        --story-border: rgba(178, 186, 200, 0.4);
+        --story-left-1: #95bf47;
+        --story-left-2: #7f8fa8;
+        --story-left-3: #b1bacb;
+        --story-meta: #b8c1d2;
+        --story-summary: #e1e7f5;
+        --metric-chip-bg-1: rgba(149, 191, 71, 0.22);
+        --metric-chip-border-1: rgba(149, 191, 71, 0.4);
+        --metric-chip-text-1: #d7efab;
+        --metric-chip-bg-2: rgba(124, 140, 166, 0.22);
+        --metric-chip-border-2: rgba(124, 140, 166, 0.38);
+        --metric-chip-text-2: #d8e0ef;
+        --metric-chip-bg-3: rgba(159, 170, 190, 0.22);
+        --metric-chip-border-3: rgba(159, 170, 190, 0.38);
+        --metric-chip-text-3: #e6ebf6;
+        --tech-chip-bg: rgba(123, 137, 161, 0.22);
+        --tech-chip-border: rgba(123, 137, 161, 0.4);
+        --tech-chip-text: #e0e7f4;
+        --footer-bg: rgba(34, 41, 55, 0.84);
+        --contact-text: #dfe6f4;
+        --cta-bg: linear-gradient(130deg, rgba(149, 191, 71, 0.24) 0%, rgba(134, 150, 179, 0.2) 100%);
+        --cta-border: rgba(149, 191, 71, 0.44);
+        --cta-text: #f0ffd4;
       }}
 
       * {{
@@ -150,7 +374,7 @@ def render_html(data: dict[str, Any], input_dir: Path, template_dir: Path) -> st
         height: 297mm;
         font-family: Inter, "Segoe UI", Arial, Helvetica, sans-serif;
         color: var(--text-strong);
-        background: var(--ink-0);
+        background: var(--body-bg);
         print-color-adjust: exact;
         -webkit-print-color-adjust: exact;
       }}
@@ -162,36 +386,19 @@ def render_html(data: dict[str, Any], input_dir: Path, template_dir: Path) -> st
         display: grid;
         grid-template-rows: auto auto 1fr auto;
         gap: 2.4mm;
-        background:
-          radial-gradient(circle at 14% 8%, rgba(103, 84, 255, 0.27), transparent 32%),
-          radial-gradient(circle at 88% 6%, rgba(41, 201, 255, 0.2), transparent 29%),
-          radial-gradient(circle at 86% 96%, rgba(234, 78, 242, 0.16), transparent 32%),
-          linear-gradient(168deg, #101528 0%, #131a30 48%, #11162a 100%);
+        background: var(--page-bg);
       }}
 
       .top-accent {{
         height: 2.1mm;
-        background: linear-gradient(
-          90deg,
-          var(--shopify-green) 0%,
-          var(--green-bright) 22%,
-          var(--teal) 44%,
-          var(--cyan) 66%,
-          var(--violet) 84%,
-          var(--pink) 100%
-        );
+        background: var(--top-accent);
         border-radius: 999px;
       }}
 
       .hero {{
         border: 1px solid var(--line);
         border-radius: 3.2mm;
-        background: linear-gradient(
-          150deg,
-          rgba(32, 43, 76, 0.92) 0%,
-          rgba(23, 30, 54, 0.94) 68%,
-          rgba(21, 28, 49, 0.96) 100%
-        );
+        background: var(--hero-bg);
         padding: 3.1mm 3.6mm;
         display: grid;
         gap: 2.4mm;
@@ -200,52 +407,25 @@ def render_html(data: dict[str, Any], input_dir: Path, template_dir: Path) -> st
       .hero-top-row {{
         display: flex;
         justify-content: space-between;
-        align-items: flex-start;
+        align-items: center;
         gap: 2.4mm;
       }}
 
-      .brand-row {{
-        display: flex;
-        align-items: center;
-        gap: 1.5mm;
-      }}
-
-      .logo-pill {{
-        background: rgba(255, 255, 255, 0.95);
-        border-radius: 1.7mm;
-        padding: 1.2mm 1.8mm;
-        border: 1px solid rgba(210, 213, 217, 0.8);
-        display: inline-flex;
-        align-items: center;
-      }}
-
-      .logo-pill.shopify-pill {{
-        padding: 1.3mm 1.9mm;
-      }}
-
-      .partner-logo {{
-        max-height: 7.6mm;
-        max-width: 55mm;
-        width: auto;
-      }}
-
-      .shopify-logo {{
-        max-height: 6.8mm;
-        width: auto;
-      }}
-
-      .brand-divider {{
-        color: var(--text-muted);
-        font-size: 4.1mm;
+      .eyebrow {{
+        margin: 0;
+        color: var(--eyebrow);
+        font-size: 2.35mm;
         font-weight: 700;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
       }}
 
       .doc-badge {{
         display: inline-flex;
         align-items: center;
-        background: rgba(103, 84, 255, 0.18);
-        color: #d9d4ff;
-        border: 1px solid rgba(103, 84, 255, 0.45);
+        background: var(--badge-bg);
+        color: var(--badge-text);
+        border: 1px solid var(--badge-border);
         border-radius: 999px;
         padding: 0.9mm 2.2mm;
         font-size: 2.5mm;
@@ -255,29 +435,67 @@ def render_html(data: dict[str, Any], input_dir: Path, template_dir: Path) -> st
         white-space: nowrap;
       }}
 
-      .eyebrow {{
-        margin: 0;
-        color: #a8b1eb;
-        font-size: 2.35mm;
+      .logo-lockup {{
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) auto minmax(36mm, 44mm);
+        align-items: center;
+        gap: 1.5mm;
+      }}
+
+      .brand-divider {{
+        color: var(--text-muted);
+        font-size: 4.1mm;
         font-weight: 700;
-        letter-spacing: 0.08em;
-        text-transform: uppercase;
+      }}
+
+      .logo-shell {{
+        background: var(--logo-shell-bg);
+        border: 1px solid var(--logo-shell-border);
+        border-radius: 1.75mm;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+      }}
+
+      .logo-shell.partner-shell {{
+        min-height: 13mm;
+        padding: 1.6mm 2.2mm;
+      }}
+
+      .logo-shell.shopify-shell {{
+        min-height: 13mm;
+        padding: 1.6mm 2mm;
+      }}
+
+      .partner-logo {{
+        max-height: 9.1mm;
+        max-width: 100%;
+        width: 100%;
+        object-fit: contain;
+        object-position: center;
+      }}
+
+      .shopify-logo {{
+        max-height: 8.3mm;
+        max-width: 100%;
+        width: 100%;
+        object-fit: contain;
       }}
 
       h1 {{
-        margin: 1.1mm 0 0;
+        margin: 1.5mm 0 0;
         font-size: 6.4mm;
         line-height: 1.03;
         font-weight: 800;
         letter-spacing: -0.02em;
-        color: #ffffff;
+        color: var(--title);
       }}
 
       .subtitle {{
         margin: 1.2mm 0 0;
         font-size: 3.02mm;
         line-height: 1.3;
-        color: var(--text-muted);
+        color: var(--subtitle);
       }}
 
       .meta-grid {{
@@ -291,7 +509,7 @@ def render_html(data: dict[str, Any], input_dir: Path, template_dir: Path) -> st
         overflow: hidden;
         border-radius: 2.3mm;
         border: 1px solid var(--line);
-        background: rgba(28, 37, 68, 0.85);
+        background: var(--meta-bg);
         padding: 2.2mm 2.2mm 2.1mm;
       }}
 
@@ -300,19 +518,19 @@ def render_html(data: dict[str, Any], input_dir: Path, template_dir: Path) -> st
         position: absolute;
         inset: 0 0 auto;
         height: 0.95mm;
-        background: linear-gradient(90deg, var(--shopify-green), var(--green-bright));
+        background: var(--meta-accent-1);
       }}
 
       .meta-card:nth-child(2)::before {{
-        background: linear-gradient(90deg, var(--cyan), var(--teal));
+        background: var(--meta-accent-2);
       }}
 
       .meta-card:nth-child(3)::before {{
-        background: linear-gradient(90deg, var(--violet), #423eff);
+        background: var(--meta-accent-3);
       }}
 
       .meta-card:nth-child(4)::before {{
-        background: linear-gradient(90deg, var(--pink), #ff7bc4);
+        background: var(--meta-accent-4);
       }}
 
       .meta-label {{
@@ -320,7 +538,7 @@ def render_html(data: dict[str, Any], input_dir: Path, template_dir: Path) -> st
         font-size: 2.35mm;
         text-transform: uppercase;
         letter-spacing: 0.09em;
-        color: #a8b1eb;
+        color: var(--meta-label);
         font-weight: 700;
       }}
 
@@ -329,7 +547,7 @@ def render_html(data: dict[str, Any], input_dir: Path, template_dir: Path) -> st
         font-size: 3.06mm;
         line-height: 1.2;
         font-weight: 700;
-        color: #ffffff;
+        color: var(--meta-value);
       }}
 
       .content-grid {{
@@ -350,61 +568,31 @@ def render_html(data: dict[str, Any], input_dir: Path, template_dir: Path) -> st
         border: 1px solid var(--line);
         border-radius: 2.5mm;
         padding: 2.65mm;
-        background: rgba(28, 37, 68, 0.82);
+        background: var(--section-base-bg);
       }}
 
       .section.strengths {{
-        background: linear-gradient(
-            155deg,
-            rgba(112, 213, 14, 0.18) 0%,
-            rgba(28, 37, 68, 0.9) 48%,
-            rgba(28, 37, 68, 0.84) 100%
-          );
+        background: var(--section-strengths-bg);
       }}
 
       .section.capabilities {{
-        background: linear-gradient(
-            155deg,
-            rgba(103, 84, 255, 0.18) 0%,
-            rgba(28, 37, 68, 0.9) 52%,
-            rgba(28, 37, 68, 0.84) 100%
-          );
+        background: var(--section-capabilities-bg);
       }}
 
       .section.icp {{
-        background: linear-gradient(
-            155deg,
-            rgba(51, 237, 226, 0.16) 0%,
-            rgba(28, 37, 68, 0.9) 52%,
-            rgba(28, 37, 68, 0.84) 100%
-          );
+        background: var(--section-icp-bg);
       }}
 
       .section.stories {{
-        background: linear-gradient(
-            155deg,
-            rgba(41, 201, 255, 0.18) 0%,
-            rgba(28, 37, 68, 0.9) 44%,
-            rgba(28, 37, 68, 0.84) 100%
-          );
+        background: var(--section-stories-bg);
       }}
 
       .section.delivery {{
-        background: linear-gradient(
-            155deg,
-            rgba(234, 78, 242, 0.16) 0%,
-            rgba(28, 37, 68, 0.9) 54%,
-            rgba(28, 37, 68, 0.84) 100%
-          );
+        background: var(--section-delivery-bg);
       }}
 
       .section.tech {{
-        background: linear-gradient(
-            155deg,
-            rgba(41, 201, 255, 0.14) 0%,
-            rgba(28, 37, 68, 0.9) 54%,
-            rgba(28, 37, 68, 0.84) 100%
-          );
+        background: var(--section-tech-bg);
       }}
 
       .section-header {{
@@ -427,49 +615,49 @@ def render_html(data: dict[str, Any], input_dir: Path, template_dir: Path) -> st
         width: 3.05mm;
         height: 3.05mm;
         fill: none;
-        stroke: #ffffff;
+        stroke: var(--icon-stroke);
         stroke-width: 1.85;
         stroke-linecap: round;
         stroke-linejoin: round;
       }}
 
       .icon-strengths {{
-        background: linear-gradient(135deg, var(--shopify-green), var(--green-bright));
+        background: var(--icon-strengths-bg);
       }}
 
       .icon-capabilities {{
-        background: linear-gradient(135deg, #423eff, var(--violet));
+        background: var(--icon-capabilities-bg);
       }}
 
       .icon-icp {{
-        background: linear-gradient(135deg, #1cd9d9, var(--teal));
+        background: var(--icon-icp-bg);
       }}
 
       .icon-stories {{
-        background: linear-gradient(135deg, var(--cyan), #00b4cd);
+        background: var(--icon-stories-bg);
       }}
 
       .icon-delivery {{
-        background: linear-gradient(135deg, var(--pink), #6754ff);
+        background: var(--icon-delivery-bg);
       }}
 
       .icon-tech {{
-        background: linear-gradient(135deg, var(--cyan), var(--violet));
+        background: var(--icon-tech-bg);
       }}
 
       .icon-engage {{
-        background: linear-gradient(135deg, var(--shopify-green), #33ede2);
+        background: var(--icon-engage-bg);
       }}
 
       .icon-contact {{
-        background: linear-gradient(135deg, var(--violet), var(--pink));
+        background: var(--icon-contact-bg);
       }}
 
       .section h2 {{
         margin: 0;
         font-size: 3.85mm;
         line-height: 1.2;
-        color: #ffffff;
+        color: var(--heading);
         letter-spacing: -0.01em;
       }}
 
@@ -477,7 +665,7 @@ def render_html(data: dict[str, Any], input_dir: Path, template_dir: Path) -> st
         margin: 1.1mm 0 0;
         font-size: 2.45mm;
         line-height: 1.35;
-        color: #a8b1eb;
+        color: var(--section-note);
       }}
 
       ul {{
@@ -494,7 +682,7 @@ def render_html(data: dict[str, Any], input_dir: Path, template_dir: Path) -> st
         padding-left: 3.1mm;
         font-size: 2.72mm;
         line-height: 1.3;
-        color: #e4e9ff;
+        color: var(--list-text);
       }}
 
       li::before {{
@@ -505,7 +693,7 @@ def render_html(data: dict[str, Any], input_dir: Path, template_dir: Path) -> st
         width: 1.35mm;
         height: 1.35mm;
         border-radius: 999px;
-        background: linear-gradient(135deg, var(--shopify-green), var(--teal));
+        background: var(--bullet-bg);
       }}
 
       .split-row {{
@@ -539,7 +727,7 @@ def render_html(data: dict[str, Any], input_dir: Path, template_dir: Path) -> st
 
       .icp-table {{
         margin-top: 1.8mm;
-        border: 1px solid rgba(168, 177, 235, 0.45);
+        border: 1px solid var(--line);
         border-radius: 1.8mm;
         overflow: hidden;
       }}
@@ -547,7 +735,7 @@ def render_html(data: dict[str, Any], input_dir: Path, template_dir: Path) -> st
       .icp-row {{
         display: grid;
         grid-template-columns: 34% 66%;
-        border-bottom: 1px solid rgba(168, 177, 235, 0.28);
+        border-bottom: 1px solid var(--line);
       }}
 
       .icp-row:last-child {{
@@ -555,19 +743,19 @@ def render_html(data: dict[str, Any], input_dir: Path, template_dir: Path) -> st
       }}
 
       .icp-label {{
-        background: rgba(168, 177, 235, 0.14);
+        background: var(--icp-label-bg);
         padding: 1.7mm 1.9mm;
         font-size: 2.5mm;
         line-height: 1.25;
         font-weight: 700;
-        color: #ebeeff;
+        color: var(--icp-label-text);
       }}
 
       .icp-value {{
         padding: 1.7mm 1.9mm;
         font-size: 2.46mm;
         line-height: 1.3;
-        color: #dde3ff;
+        color: var(--icp-value-text);
       }}
 
       .story-list {{
@@ -577,32 +765,32 @@ def render_html(data: dict[str, Any], input_dir: Path, template_dir: Path) -> st
       }}
 
       .story-card {{
-        border: 1px solid rgba(168, 177, 235, 0.42);
-        border-left: 1.2mm solid var(--shopify-green);
+        border: 1px solid var(--story-border);
+        border-left: 1.2mm solid var(--story-left-1);
         border-radius: 1.8mm;
         padding: 1.75mm 1.95mm;
-        background: rgba(20, 27, 49, 0.78);
+        background: var(--story-card-bg);
       }}
 
       .story-card:nth-child(2) {{
-        border-left-color: var(--cyan);
+        border-left-color: var(--story-left-2);
       }}
 
       .story-card:nth-child(3) {{
-        border-left-color: var(--pink);
+        border-left-color: var(--story-left-3);
       }}
 
       .story-heading h3 {{
         margin: 0;
         font-size: 2.9mm;
-        color: #ffffff;
+        color: var(--heading);
         line-height: 1.2;
       }}
 
       .story-meta {{
         margin: 0.65mm 0 0;
         font-size: 2.35mm;
-        color: #a8b1eb;
+        color: var(--story-meta);
         line-height: 1.25;
       }}
 
@@ -610,7 +798,7 @@ def render_html(data: dict[str, Any], input_dir: Path, template_dir: Path) -> st
         margin: 1mm 0 0;
         font-size: 2.45mm;
         line-height: 1.3;
-        color: #dde3ff;
+        color: var(--story-summary);
       }}
 
       .metric-chip-row {{
@@ -627,21 +815,21 @@ def render_html(data: dict[str, Any], input_dir: Path, template_dir: Path) -> st
         padding: 0.55mm 1.3mm;
         font-size: 2.22mm;
         font-weight: 700;
-        background: rgba(112, 213, 14, 0.2);
-        color: #d5f8a6;
-        border: 1px solid rgba(112, 213, 14, 0.38);
+        background: var(--metric-chip-bg-1);
+        color: var(--metric-chip-text-1);
+        border: 1px solid var(--metric-chip-border-1);
       }}
 
       .story-card:nth-child(2) .metric-chip {{
-        background: rgba(41, 201, 255, 0.18);
-        border-color: rgba(41, 201, 255, 0.36);
-        color: #baf0ff;
+        background: var(--metric-chip-bg-2);
+        border-color: var(--metric-chip-border-2);
+        color: var(--metric-chip-text-2);
       }}
 
       .story-card:nth-child(3) .metric-chip {{
-        background: rgba(234, 78, 242, 0.18);
-        border-color: rgba(234, 78, 242, 0.36);
-        color: #ffd1fd;
+        background: var(--metric-chip-bg-3);
+        border-color: var(--metric-chip-border-3);
+        color: var(--metric-chip-text-3);
       }}
 
       .tech-chip-row {{
@@ -655,9 +843,9 @@ def render_html(data: dict[str, Any], input_dir: Path, template_dir: Path) -> st
         display: inline-flex;
         align-items: center;
         border-radius: 999px;
-        border: 1px solid rgba(103, 84, 255, 0.45);
-        background: rgba(103, 84, 255, 0.2);
-        color: #ddd8ff;
+        border: 1px solid var(--tech-chip-border);
+        background: var(--tech-chip-bg);
+        color: var(--tech-chip-text);
         padding: 0.7mm 1.5mm;
         font-size: 2.35mm;
         font-weight: 700;
@@ -668,7 +856,7 @@ def render_html(data: dict[str, Any], input_dir: Path, template_dir: Path) -> st
         border: 1px solid var(--line);
         border-radius: 2.5mm;
         padding: 2.65mm;
-        background: rgba(28, 37, 68, 0.82);
+        background: var(--footer-bg);
         display: grid;
         grid-template-columns: 1fr 1fr;
         gap: 2.4mm;
@@ -690,51 +878,46 @@ def render_html(data: dict[str, Any], input_dir: Path, template_dir: Path) -> st
 
       .contact-label {{
         font-weight: 700;
-        color: #ebeeff;
+        color: var(--heading);
       }}
 
       .contact-value {{
-        color: #dde3ff;
+        color: var(--contact-text);
       }}
 
       .cta {{
         margin-top: 1.5mm;
-        background: linear-gradient(
-          130deg,
-          rgba(149, 191, 71, 0.22) 0%,
-          rgba(51, 237, 226, 0.18) 58%,
-          rgba(41, 201, 255, 0.2) 100%
-        );
-        border: 1px solid rgba(149, 191, 71, 0.45);
-        border-left: 1.2mm solid var(--shopify-green);
+        background: var(--cta-bg);
+        border: 1px solid var(--cta-border);
+        border-left: 1.2mm solid #95bf47;
         border-radius: 1.8mm;
         padding: 1.45mm 1.75mm;
         font-size: 2.6mm;
         font-weight: 700;
         line-height: 1.28;
-        color: #f3ffd5;
+        color: var(--cta-text);
       }}
     </style>
   </head>
-  <body>
+  <body class="theme-{theme_key}">
     <main class="page">
       <div class="top-accent"></div>
 
       <section class="hero">
         <div class="hero-top-row">
-          <div class="brand-row">
-            <div class="logo-pill">
-              <img class="partner-logo" src="{partner_logo}" alt="Partner logo" />
-            </div>
-            <span class="brand-divider">×</span>
-            <div class="logo-pill shopify-pill">
-              <img class="shopify-logo" src="{shopify_logo}" alt="Shopify logo" />
-            </div>
+          <p class="eyebrow">Shopify ecosystem one-pager</p>
+          <span class="doc-badge">Partner profile · {theme_label}</span>
+        </div>
+        <div class="logo-lockup">
+          <div class="logo-shell partner-shell">
+            <img class="partner-logo" src="{partner_logo}" alt="Partner logo" />
           </div>
-          <span class="doc-badge">Partner profile</span>
+          <span class="brand-divider">×</span>
+          <div class="logo-shell shopify-shell">
+            <img class="shopify-logo" src="{shopify_logo}" alt="Shopify logo" />
+          </div>
         </div>
         <div>
-          <p class="eyebrow">Shopify ecosystem one-pager</p>
           <h1>{_escaped(data.get("partner_name"))}</h1>
           <p class="subtitle">{_escaped(data.get("partner_tagline"))}</p>
         </div>
@@ -829,8 +1012,8 @@ def render_html(data: dict[str, Any], input_dir: Path, template_dir: Path) -> st
                 <h2>Delivery Parameters</h2>
               </div>
               <ul>
-              <li><strong>Typical budget:</strong> {_escaped(data.get("target_budget_range"))}</li>
-              <li><strong>Implementation timeline:</strong> {_escaped(data.get("delivery_timeline"))}</li>
+                <li><strong>Typical budget:</strong> {_escaped(data.get("target_budget_range"))}</li>
+                <li><strong>Implementation timeline:</strong> {_escaped(data.get("delivery_timeline"))}</li>
               </ul>
             </article>
 
@@ -963,6 +1146,12 @@ def main() -> None:
         help="Path for generated PDF output.",
     )
     parser.add_argument(
+        "--theme",
+        default="aurora",
+        choices=["aurora", "slate", "graphite"],
+        help="Design theme variant.",
+    )
+    parser.add_argument(
         "--skip-pdf",
         action="store_true",
         help="Render HTML only and skip PDF generation.",
@@ -983,7 +1172,12 @@ def main() -> None:
         output_pdf = (template_dir / output_pdf).resolve()
 
     data = json.loads(input_path.read_text(encoding="utf-8"))
-    html_content = render_html(data, input_dir=input_path.parent, template_dir=template_dir)
+    html_content = render_html(
+        data,
+        input_dir=input_path.parent,
+        template_dir=template_dir,
+        theme=args.theme,
+    )
 
     output_html.parent.mkdir(parents=True, exist_ok=True)
     output_html.write_text(html_content, encoding="utf-8")
@@ -992,6 +1186,7 @@ def main() -> None:
         output_pdf.parent.mkdir(parents=True, exist_ok=True)
         _build_pdf(output_html, output_pdf)
 
+    print(f"Theme: {args.theme}")
     print(f"Rendered HTML: {output_html}")
     if not args.skip_pdf:
         print(f"Generated PDF: {output_pdf}")
