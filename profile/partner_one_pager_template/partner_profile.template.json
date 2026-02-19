@@ -74,6 +74,13 @@
       ]
     }
   ],
+  "other_technology_partners": [
+    "Klaviyo",
+    "Gorgias",
+    "Yotpo",
+    "Nosto",
+    "Recharge"
+  ],
   "engagement_model": [
     "Step 1: 15-minute fit check with high-level recommendation",
     "Step 2: Fast scope, timeline, and budget alignment",

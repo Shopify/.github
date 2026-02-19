@@ -15,8 +15,9 @@ This folder contains a reusable, A4-sized one-pager template for Shopify partner
 This template follows Shopify-style visual treatment:
 
 - official Shopify logo assets
-- neutral white/gray layout
-- Shopify green accent (`#95BF47`) for highlights
+- premium dark layout with minimal card system
+- Shopify-inspired multi-color accent palette (green, cyan, violet)
+- icon-led sections for faster scanning
 
 When customizing:
 
@@ -53,6 +54,7 @@ python3 build_partner_one_pager.py \
 - `capabilities`
 - `ideal_customer_profile`
 - `success_stories`
+- `other_technology_partners`
 - `engagement_model`
 - `contact`
 

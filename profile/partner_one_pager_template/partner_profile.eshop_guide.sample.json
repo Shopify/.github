@@ -74,6 +74,13 @@
       ]
     }
   ],
+  "other_technology_partners": [
+    "Klaviyo",
+    "Gorgias",
+    "Nosto",
+    "Yotpo",
+    "Xentral"
+  ],
   "engagement_model": [
     "15-minute fit check followed by timeline and budget estimate",
     "Technical and commercial alignment in IT, ERP, and leadership calls",
