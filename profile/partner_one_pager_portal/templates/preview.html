@@ -1,0 +1,79 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Partner One-Pager Portal — Share Preview</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}" />
+  </head>
+  <body>
+    <main class="container">
+      <section class="preview-hero">
+        <p class="hero-eyebrow">Internal preview</p>
+        <h1>Partner One-Pager Self-Serve Tool</h1>
+        <p class="hero-subtext">
+          Partners submit their profile details and logo through a guided form.
+          The system then generates a branded single-page A4 PDF automatically.
+        </p>
+        <div class="preview-actions">
+          <a class="btn btn-primary" href="/">Try the live form</a>
+          <a class="btn" href="/?preset=sample">Open sample-filled form</a>
+        </div>
+      </section>
+
+      <section class="preview-grid">
+        <article class="preview-card">
+          <h2>How it works</h2>
+          <ol>
+            <li>Partner fills core profile, strengths, capabilities, and stories</li>
+            <li>Partner uploads logo (SVG/PNG/JPG/WEBP)</li>
+            <li>Partner chooses visual style (Graphite default)</li>
+            <li>System generates and downloads A4 PDF instantly</li>
+          </ol>
+        </article>
+
+        <article class="preview-card">
+          <h2>What this preview includes</h2>
+          <ul>
+            <li>Live working form page</li>
+            <li>Generated sample PDFs for each design style</li>
+            <li>Graphite as default production style</li>
+            <li>Shareable internal preview URL: <code>/preview</code></li>
+          </ul>
+        </article>
+      </section>
+
+      <section class="preview-card">
+        <h2>Generated sample PDFs</h2>
+        <div class="preview-actions">
+          {% if sample_links.sample_graphite %}
+          <a class="btn" target="_blank" href="{{ sample_links.sample_graphite }}">Graphite sample PDF</a>
+          {% endif %}
+          {% if sample_links.sample_slate %}
+          <a class="btn" target="_blank" href="{{ sample_links.sample_slate }}">Slate sample PDF</a>
+          {% endif %}
+          {% if sample_links.sample_aurora %}
+          <a class="btn" target="_blank" href="{{ sample_links.sample_aurora }}">Aurora sample PDF</a>
+          {% endif %}
+          {% if sample_links.template_graphite %}
+          <a class="btn" target="_blank" href="{{ sample_links.template_graphite }}">Blank template PDF</a>
+          {% endif %}
+        </div>
+      </section>
+
+      <section class="preview-card">
+        <h2>Embedded sample (Graphite)</h2>
+        {% set frame_src = sample_links.sample_graphite or sample_links.template_graphite %}
+        {% if frame_src %}
+        <iframe
+          class="pdf-frame"
+          src="{{ frame_src }}#view=FitH"
+          title="Sample partner profile PDF preview"
+        ></iframe>
+        {% else %}
+        <p>No sample PDFs found in the repository yet.</p>
+        {% endif %}
+      </section>
+    </main>
+  </body>
+</html>

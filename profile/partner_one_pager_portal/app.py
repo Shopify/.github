@@ -13,7 +13,7 @@ from pathlib import Path
 from types import ModuleType
 from typing import Any
 
-from flask import Flask, render_template, request, send_file
+from flask import Flask, abort, render_template, request, send_file
 from werkzeug.datastructures import FileStorage
 from werkzeug.utils import secure_filename
 
@@ -24,6 +24,12 @@ GENERATOR_PATH = TEMPLATE_DIR / "build_partner_one_pager.py"
 
 THEMES = ("graphite", "slate", "aurora")
 ALLOWED_LOGO_EXTENSIONS = {".svg", ".png", ".jpg", ".jpeg", ".webp"}
+SAMPLE_PDFS = {
+    "template_graphite": TEMPLATE_DIR / "partner_one_pager_a4.pdf",
+    "sample_graphite": TEMPLATE_DIR / "eshop_guide_one_pager_a4.pdf",
+    "sample_slate": TEMPLATE_DIR / "eshop_guide_one_pager_a4_slate.pdf",
+    "sample_aurora": TEMPLATE_DIR / "eshop_guide_one_pager_a4_aurora.pdf",
+}
 
 
 def _load_generator_module() -> ModuleType:
@@ -308,6 +314,32 @@ def index() -> str:
         form_data=form_data,
         themes=THEMES,
         errors=[],
+    )
+
+
+@app.get("/preview")
+def preview() -> str:
+    available_samples = {
+        key: f"/sample-pdfs/{key}"
+        for key, path in SAMPLE_PDFS.items()
+        if path.exists()
+    }
+    return render_template(
+        "preview.html",
+        sample_links=available_samples,
+    )
+
+
+@app.get("/sample-pdfs/<sample_name>")
+def sample_pdf(sample_name: str) -> Any:
+    pdf_path = SAMPLE_PDFS.get(sample_name)
+    if not pdf_path or not pdf_path.exists():
+        abort(404)
+    return send_file(
+        pdf_path,
+        as_attachment=False,
+        download_name=pdf_path.name,
+        mimetype="application/pdf",
     )
 
 

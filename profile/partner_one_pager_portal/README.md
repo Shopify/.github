@@ -23,6 +23,7 @@ python3 app.py
 Open:
 
 - `http://localhost:5050/`
+- `http://localhost:5050/preview` (share-friendly colleague preview page)
 
 Optional presets:
 
@@ -34,3 +35,4 @@ Optional presets:
 - default design theme is `graphite`
 - additional themes are available in the form: `slate`, `aurora`
 - max upload size is 8 MB
+- sample PDFs can be accessed directly via `/sample-pdfs/<name>`
