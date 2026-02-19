@@ -1,0 +1,203 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Partner One-Pager Portal</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}" />
+  </head>
+  <body>
+    <main class="container">
+      <header class="header">
+        <h1>Shopify Partner One-Pager Generator</h1>
+        <p>
+          Fill in the form, upload a logo, and generate a branded A4 PDF in one
+          click.
+        </p>
+        <div class="preset-links">
+          <a href="/preview">Open colleague preview page</a>
+          <a href="/?preset=template">Load template placeholders</a>
+          <a href="/?preset=sample">Load sample content</a>
+        </div>
+      </header>
+
+      {% if errors %}
+      <section class="errors" aria-live="assertive">
+        <h2>Fix these items before generating:</h2>
+        <ul>
+          {% for error in errors %}
+          <li>{{ error }}</li>
+          {% endfor %}
+        </ul>
+      </section>
+      {% endif %}
+
+      <form action="/generate" method="post" enctype="multipart/form-data" class="grid">
+        <section class="card">
+          <h2>Brand + Overview</h2>
+          <div class="field-grid two">
+            <label>
+              Theme
+              <select name="theme">
+                {% for theme in themes %}
+                <option value="{{ theme }}" {% if form_data.theme == theme %}selected{% endif %}>
+                  {{ theme|capitalize }}
+                </option>
+                {% endfor %}
+              </select>
+            </label>
+
+            <label>
+              Partner logo (SVG/PNG/JPG/WEBP)
+              <input type="file" name="partner_logo" accept=".svg,.png,.jpg,.jpeg,.webp" />
+            </label>
+          </div>
+
+          <div class="field-grid two">
+            <label>
+              Partner name
+              <input name="partner_name" value="{{ form_data.partner_name }}" required />
+            </label>
+            <label>
+              Partner tagline
+              <input name="partner_tagline" value="{{ form_data.partner_tagline }}" required />
+            </label>
+          </div>
+
+          <div class="field-grid four">
+            <label>
+              Segment focus
+              <input name="segment_focus" value="{{ form_data.segment_focus }}" required />
+            </label>
+            <label>
+              Region
+              <input name="region" value="{{ form_data.region }}" required />
+            </label>
+            <label>
+              Shopify partner since
+              <input name="shopify_partner_since" value="{{ form_data.shopify_partner_since }}" required />
+            </label>
+            <label>
+              Team size
+              <input name="team_size" value="{{ form_data.team_size }}" required />
+            </label>
+          </div>
+
+          <div class="field-grid two">
+            <label>
+              Typical budget range
+              <input name="target_budget_range" value="{{ form_data.target_budget_range }}" required />
+            </label>
+            <label>
+              Delivery timeline
+              <input name="delivery_timeline" value="{{ form_data.delivery_timeline }}" required />
+            </label>
+          </div>
+        </section>
+
+        <section class="card">
+          <h2>Strengths + Capabilities</h2>
+          <div class="field-grid two">
+            <label>
+              Strengths (one item per line)
+              <textarea name="strengths_text" rows="7">{{ form_data.strengths_text }}</textarea>
+            </label>
+            <label>
+              Capabilities (one item per line)
+              <textarea name="capabilities_text" rows="7">{{ form_data.capabilities_text }}</textarea>
+            </label>
+          </div>
+        </section>
+
+        <section class="card">
+          <h2>Ideal Customer Profile</h2>
+          <p class="muted">Fill up to 4 rows.</p>
+          {% for row in form_data.icp_rows %}
+          <div class="field-grid two">
+            <label>
+              ICP label {{ loop.index }}
+              <input name="icp_label_{{ loop.index }}" value="{{ row.label }}" />
+            </label>
+            <label>
+              ICP value {{ loop.index }}
+              <input name="icp_value_{{ loop.index }}" value="{{ row.value }}" />
+            </label>
+          </div>
+          {% endfor %}
+        </section>
+
+        <section class="card">
+          <h2>Success Stories</h2>
+          {% for story in form_data.success_stories %}
+          <div class="story-block">
+            <h3>Story {{ loop.index }}</h3>
+            <div class="field-grid three">
+              <label>
+                Client
+                <input name="story_{{ loop.index }}_client" value="{{ story.client }}" />
+              </label>
+              <label>
+                Industry
+                <input name="story_{{ loop.index }}_industry" value="{{ story.industry }}" />
+              </label>
+              <label>
+                Migration from
+                <input name="story_{{ loop.index }}_migration_from" value="{{ story.migration_from }}" />
+              </label>
+            </div>
+            <label>
+              Summary
+              <input name="story_{{ loop.index }}_summary" value="{{ story.summary }}" />
+            </label>
+            <label>
+              Results (one item per line)
+              <textarea name="story_{{ loop.index }}_results" rows="4">{{ story.results_text }}</textarea>
+            </label>
+          </div>
+          {% endfor %}
+        </section>
+
+        <section class="card">
+          <h2>Other Technology Partners + Engagement</h2>
+          <div class="field-grid two">
+            <label>
+              Other technology partners (comma or new line separated)
+              <textarea name="technology_partners_text" rows="5">{{ form_data.technology_partners_text }}</textarea>
+            </label>
+            <label>
+              Engagement model steps (one line each)
+              <textarea name="engagement_model_text" rows="5">{{ form_data.engagement_model_text }}</textarea>
+            </label>
+          </div>
+
+          <label>
+            CTA copy
+            <input name="cta" value="{{ form_data.cta }}" />
+          </label>
+        </section>
+
+        <section class="card">
+          <h2>Contact</h2>
+          <div class="field-grid three">
+            <label>
+              Slack
+              <input name="contact_slack" value="{{ form_data.contact_slack }}" />
+            </label>
+            <label>
+              Email
+              <input name="contact_email" value="{{ form_data.contact_email }}" required />
+            </label>
+            <label>
+              Website
+              <input name="contact_website" value="{{ form_data.contact_website }}" />
+            </label>
+          </div>
+        </section>
+
+        <section class="actions">
+          <button type="submit">Generate A4 PDF</button>
+        </section>
+      </form>
+    </main>
+  </body>
+</html>

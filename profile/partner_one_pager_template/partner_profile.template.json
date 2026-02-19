@@ -1,0 +1,95 @@
+{
+  "partner_name": "Your Partner Name",
+  "partner_tagline": "Your short positioning statement (8-12 words)",
+  "segment_focus": "Mid-market / Enterprise / SMB",
+  "region": "Primary region (for example DACH, EU, North America)",
+  "shopify_partner_since": "Year",
+  "team_size": "Team size (for example 30+ Shopify specialists)",
+  "target_budget_range": "Typical initial project budget range",
+  "delivery_timeline": "Typical implementation timeline",
+  "partner_logo_path": "assets/partner-logo-placeholder.svg",
+  "shopify_logo_path": "assets/shopify-logo-full-color.svg",
+  "strengths": [
+    "Core strength #1: what makes your team hard to replace",
+    "Core strength #2: your strongest execution advantage",
+    "Core strength #3: proof-backed differentiator",
+    "Core strength #4: commercial or operational advantage"
+  ],
+  "capabilities": [
+    "Capability #1 (e.g., migrations from Magento/Shopware/Custom)",
+    "Capability #2 (e.g., B2B + D2C architecture and rollout)",
+    "Capability #3 (e.g., ERP/3PL/CRM integrations)",
+    "Capability #4 (e.g., CRO, retention, experimentation)"
+  ],
+  "ideal_customer_profile": [
+    {
+      "label": "Merchant stage",
+      "value": "Who you serve best (growth, scale-up, enterprise)"
+    },
+    {
+      "label": "Complexity",
+      "value": "Technical and organizational complexity you handle"
+    },
+    {
+      "label": "Business model",
+      "value": "B2B, D2C, omnichannel, wholesale, subscriptions, etc."
+    },
+    {
+      "label": "Decision criteria",
+      "value": "What the buyer values most in your projects"
+    }
+  ],
+  "success_stories": [
+    {
+      "client": "Success Story 1",
+      "industry": "Industry",
+      "migration_from": "Previous platform",
+      "summary": "1 sentence describing scope and complexity.",
+      "results": [
+        "Result metric #1",
+        "Result metric #2",
+        "Result metric #3"
+      ]
+    },
+    {
+      "client": "Success Story 2",
+      "industry": "Industry",
+      "migration_from": "Previous platform",
+      "summary": "1 sentence describing scope and complexity.",
+      "results": [
+        "Result metric #1",
+        "Result metric #2",
+        "Result metric #3"
+      ]
+    },
+    {
+      "client": "Success Story 3",
+      "industry": "Industry",
+      "migration_from": "Previous platform",
+      "summary": "1 sentence describing scope and complexity.",
+      "results": [
+        "Result metric #1",
+        "Result metric #2",
+        "Result metric #3"
+      ]
+    }
+  ],
+  "other_technology_partners": [
+    "Klaviyo",
+    "Gorgias",
+    "Yotpo",
+    "Nosto",
+    "Recharge"
+  ],
+  "engagement_model": [
+    "Step 1: 15-minute fit check with high-level recommendation",
+    "Step 2: Fast scope, timeline, and budget alignment",
+    "Step 3: Joint delivery kickoff and governance setup"
+  ],
+  "contact": {
+    "slack": "#your-slack-channel",
+    "email": "name@partner.com, second@partner.com",
+    "website": "https://yourpartnerdomain.com"
+  },
+  "cta": "How to get started with us"
+}

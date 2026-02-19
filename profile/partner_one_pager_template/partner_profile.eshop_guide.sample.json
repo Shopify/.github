@@ -1,0 +1,95 @@
+{
+  "partner_name": "Eshop Guide x Shopify",
+  "partner_tagline": "Mid-market execution engine for complex Shopify projects in DACH.",
+  "segment_focus": "Mid-market (DACH)",
+  "region": "Germany, Austria, Switzerland",
+  "shopify_partner_since": "2016",
+  "team_size": "45+ Shopify specialists",
+  "target_budget_range": "EUR 75k - EUR 200k initial project",
+  "delivery_timeline": "3-6 months implementation",
+  "partner_logo_path": "assets/partner-logo-placeholder.svg",
+  "shopify_logo_path": "assets/shopify-logo-full-color.svg",
+  "strengths": [
+    "Shopify-first delivery model with standard-first architecture",
+    "Strong technical execution for complex IT and ERP environments",
+    "Fast pre-sales support in stakeholder and architecture calls",
+    "Enablement and growth services after go-live"
+  ],
+  "capabilities": [
+    "Migrations from Shopware, Salesforce Commerce, Magento, and custom stacks",
+    "B2B and D2C commerce implementations with custom logic where needed",
+    "ERP-critical integration projects across multi-store organizations",
+    "Post-launch optimization in UX, A/B testing, retention, and conversion"
+  ],
+  "ideal_customer_profile": [
+    {
+      "label": "Merchant stage",
+      "value": "Scaling and mid-market merchants planning a strategic platform move."
+    },
+    {
+      "label": "Complexity",
+      "value": "Multiple systems, integrations, and cross-functional stakeholder groups."
+    },
+    {
+      "label": "Business model",
+      "value": "B2B, B2C, or hybrid operations with high reliability requirements."
+    },
+    {
+      "label": "Decision criteria",
+      "value": "Predictable delivery, clear budget guardrails, and business-value custom work."
+    }
+  ],
+  "success_stories": [
+    {
+      "client": "gloryfy",
+      "industry": "Eyewear",
+      "migration_from": "Custom",
+      "summary": "Migration for B2B/B2C with product configurator requirements.",
+      "results": [
+        "+315% mobile sales",
+        "+10% conversion rate",
+        "+20% revenue growth"
+      ]
+    },
+    {
+      "client": "CHRIS sports",
+      "industry": "Lifestyle / Sports",
+      "migration_from": "Shopware",
+      "summary": "12 brand stores and operational complexity across multiple entities.",
+      "results": [
+        "+462% orders",
+        "4 months to go-live",
+        "-60% TCO after migration"
+      ]
+    },
+    {
+      "client": "Ortlieb",
+      "industry": "Outdoor",
+      "migration_from": "Magento",
+      "summary": "8 stores and 10 ERP integrations with accelerated launch plan.",
+      "results": [
+        "12 weeks to go-live",
+        "EUR 75M revenue in 2024",
+        "+31% post-migration revenue"
+      ]
+    }
+  ],
+  "other_technology_partners": [
+    "Klaviyo",
+    "Gorgias",
+    "Nosto",
+    "Yotpo",
+    "Xentral"
+  ],
+  "engagement_model": [
+    "15-minute fit check followed by timeline and budget estimate",
+    "Technical and commercial alignment in IT, ERP, and leadership calls",
+    "Shared execution plan from implementation through growth optimization"
+  ],
+  "contact": {
+    "slack": "#shopify-eshop-guide-connect",
+    "email": "patrick@eshop-guide.de, oliver@eshop-guide.de",
+    "website": "https://eshop-guide.de"
+  },
+  "cta": "Get a fast feasibility, budget, and timeline assessment"
+}

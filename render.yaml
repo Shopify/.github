@@ -1,0 +1,9 @@
+services:
+  - type: web
+    name: shopify-partner-one-pager-portal
+    env: python
+    rootDir: profile/partner_one_pager_portal
+    buildCommand: pip install -r requirements.txt
+    startCommand: python app.py
+    healthCheckPath: /health
+    autoDeploy: true
