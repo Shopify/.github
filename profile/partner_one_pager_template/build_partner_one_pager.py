@@ -84,22 +84,17 @@ def _icp_rows(rows: list[dict[str, Any]]) -> str:
 
 
 def _normalized_theme(theme: str) -> str:
-    normalized = (theme or "aurora").strip().lower()
-    return normalized if normalized in {"aurora", "slate", "graphite"} else "aurora"
+    normalized = (theme or "graphite").strip().lower()
+    return normalized if normalized in {"aurora", "slate", "graphite"} else "graphite"
 
 
 def render_html(
     data: dict[str, Any],
     input_dir: Path,
     template_dir: Path,
-    theme: str = "aurora",
+    theme: str = "graphite",
 ) -> str:
     theme_key = _normalized_theme(theme)
-    theme_label = {
-        "aurora": "Aurora",
-        "slate": "Slate",
-        "graphite": "Graphite",
-    }[theme_key]
 
     partner_logo = _to_uri(
         data.get("partner_logo_path", "assets/partner-logo-placeholder.svg"),
@@ -286,76 +281,77 @@ def render_html(
       }}
 
       body.theme-graphite {{
-        --body-bg: #151922;
-        --page-bg: radial-gradient(circle at 85% 10%, rgba(130, 145, 170, 0.14), transparent 34%),
-          linear-gradient(168deg, #151922 0%, #171d29 52%, #141925 100%);
-        --text-strong: #f1f4fb;
-        --text-muted: #b6bfd1;
-        --line: rgba(178, 186, 200, 0.34);
-        --hero-bg: linear-gradient(150deg, rgba(36, 44, 59, 0.92) 0%, rgba(28, 35, 49, 0.94) 100%);
-        --top-accent: linear-gradient(90deg, #95bf47 0%, #78a63a 26%, #7a889f 66%, #9faac0 100%);
-        --logo-shell-bg: rgba(250, 252, 255, 0.96);
-        --logo-shell-border: rgba(198, 205, 218, 0.88);
-        --badge-bg: rgba(130, 145, 170, 0.2);
-        --badge-border: rgba(130, 145, 170, 0.44);
-        --badge-text: #e4eaf6;
-        --eyebrow: #c2c9d8;
+        --body-bg: #141921;
+        --page-bg: radial-gradient(circle at 82% 9%, rgba(149, 191, 71, 0.11), transparent 32%),
+          radial-gradient(circle at 14% 92%, rgba(170, 181, 199, 0.11), transparent 34%),
+          linear-gradient(168deg, #151a24 0%, #171e2a 52%, #141923 100%);
+        --text-strong: #f4f7ff;
+        --text-muted: #bec7d8;
+        --line: rgba(190, 198, 212, 0.29);
+        --hero-bg: linear-gradient(145deg, rgba(40, 48, 64, 0.95) 0%, rgba(30, 38, 52, 0.96) 100%);
+        --top-accent: linear-gradient(90deg, #95bf47 0%, #81a74d 28%, #6f7e97 66%, #8f9cb1 100%);
+        --logo-shell-bg: rgba(252, 253, 255, 0.97);
+        --logo-shell-border: rgba(201, 208, 220, 0.92);
+        --badge-bg: rgba(126, 139, 160, 0.18);
+        --badge-border: rgba(126, 139, 160, 0.4);
+        --badge-text: #e9eef9;
+        --eyebrow: #c7cfde;
         --title: #ffffff;
-        --subtitle: #c5ccdc;
-        --meta-bg: rgba(34, 41, 55, 0.86);
-        --meta-label: #b3bccd;
+        --subtitle: #cbd3e2;
+        --meta-bg: rgba(36, 43, 58, 0.84);
+        --meta-label: #b7c0d1;
         --meta-value: #ffffff;
-        --meta-accent-1: linear-gradient(90deg, #95bf47, #7ea93b);
-        --meta-accent-2: linear-gradient(90deg, #6e7f9c, #8b9dbc);
-        --meta-accent-3: linear-gradient(90deg, #5c6f8e, #7a8faf);
-        --meta-accent-4: linear-gradient(90deg, #798395, #a0aabe);
-        --section-base-bg: rgba(34, 41, 55, 0.82);
-        --section-strengths-bg: linear-gradient(155deg, rgba(149, 191, 71, 0.18) 0%, rgba(34, 41, 55, 0.9) 50%, rgba(34, 41, 55, 0.84) 100%);
-        --section-capabilities-bg: linear-gradient(155deg, rgba(95, 111, 142, 0.2) 0%, rgba(34, 41, 55, 0.9) 52%, rgba(34, 41, 55, 0.84) 100%);
-        --section-icp-bg: linear-gradient(155deg, rgba(122, 143, 175, 0.16) 0%, rgba(34, 41, 55, 0.9) 52%, rgba(34, 41, 55, 0.84) 100%);
-        --section-stories-bg: linear-gradient(155deg, rgba(112, 126, 152, 0.2) 0%, rgba(34, 41, 55, 0.9) 46%, rgba(34, 41, 55, 0.84) 100%);
-        --section-delivery-bg: linear-gradient(155deg, rgba(120, 130, 148, 0.18) 0%, rgba(34, 41, 55, 0.9) 54%, rgba(34, 41, 55, 0.84) 100%);
-        --section-tech-bg: linear-gradient(155deg, rgba(95, 109, 136, 0.18) 0%, rgba(34, 41, 55, 0.9) 56%, rgba(34, 41, 55, 0.84) 100%);
+        --meta-accent-1: linear-gradient(90deg, #95bf47, #799f44);
+        --meta-accent-2: linear-gradient(90deg, #6e7d96, #8a97ad);
+        --meta-accent-3: linear-gradient(90deg, #65758e, #8393ab);
+        --meta-accent-4: linear-gradient(90deg, #778296, #9ca8bb);
+        --section-base-bg: rgba(36, 43, 58, 0.8);
+        --section-strengths-bg: linear-gradient(155deg, rgba(149, 191, 71, 0.16) 0%, rgba(36, 43, 58, 0.9) 50%, rgba(36, 43, 58, 0.84) 100%);
+        --section-capabilities-bg: linear-gradient(155deg, rgba(101, 117, 144, 0.18) 0%, rgba(36, 43, 58, 0.9) 52%, rgba(36, 43, 58, 0.84) 100%);
+        --section-icp-bg: linear-gradient(155deg, rgba(120, 138, 166, 0.14) 0%, rgba(36, 43, 58, 0.9) 52%, rgba(36, 43, 58, 0.84) 100%);
+        --section-stories-bg: linear-gradient(155deg, rgba(111, 128, 156, 0.18) 0%, rgba(36, 43, 58, 0.9) 46%, rgba(36, 43, 58, 0.84) 100%);
+        --section-delivery-bg: linear-gradient(155deg, rgba(122, 136, 157, 0.16) 0%, rgba(36, 43, 58, 0.9) 54%, rgba(36, 43, 58, 0.84) 100%);
+        --section-tech-bg: linear-gradient(155deg, rgba(100, 116, 141, 0.16) 0%, rgba(36, 43, 58, 0.9) 56%, rgba(36, 43, 58, 0.84) 100%);
         --heading: #ffffff;
-        --section-note: #b8c1d2;
-        --list-text: #e6ebf7;
-        --bullet-bg: linear-gradient(135deg, #95bf47, #a3b2cc);
-        --icon-strengths-bg: linear-gradient(135deg, #95bf47, #7ea93b);
-        --icon-capabilities-bg: linear-gradient(135deg, #5f6f8e, #8696b3);
-        --icon-icp-bg: linear-gradient(135deg, #7b89a1, #a3afc5);
-        --icon-stories-bg: linear-gradient(135deg, #6b7d9c, #8fa1bf);
-        --icon-delivery-bg: linear-gradient(135deg, #7f8a9f, #a7b2c7);
-        --icon-tech-bg: linear-gradient(135deg, #6b7d9c, #8ea1c0);
-        --icon-engage-bg: linear-gradient(135deg, #95bf47, #8696b3);
-        --icon-contact-bg: linear-gradient(135deg, #707c94, #95a4bd);
+        --section-note: #bfc7d7;
+        --list-text: #e9edf7;
+        --bullet-bg: linear-gradient(135deg, #95bf47, #a5b2c4);
+        --icon-strengths-bg: linear-gradient(135deg, #95bf47, #799f44);
+        --icon-capabilities-bg: linear-gradient(135deg, #61728d, #8697b1);
+        --icon-icp-bg: linear-gradient(135deg, #7687a1, #a4b0c3);
+        --icon-stories-bg: linear-gradient(135deg, #6d7e9b, #90a0ba);
+        --icon-delivery-bg: linear-gradient(135deg, #7e8b9f, #a7b2c6);
+        --icon-tech-bg: linear-gradient(135deg, #6d7e9b, #8fa1bd);
+        --icon-engage-bg: linear-gradient(135deg, #95bf47, #8797b1);
+        --icon-contact-bg: linear-gradient(135deg, #727f97, #97a5bc);
         --icon-stroke: #ffffff;
-        --icp-label-bg: rgba(174, 186, 207, 0.16);
-        --icp-label-text: #eff3fb;
-        --icp-value-text: #e1e7f5;
-        --story-card-bg: rgba(24, 31, 43, 0.78);
-        --story-border: rgba(178, 186, 200, 0.4);
+        --icp-label-bg: rgba(176, 187, 207, 0.14);
+        --icp-label-text: #f1f4fb;
+        --icp-value-text: #e5ebf8;
+        --story-card-bg: rgba(26, 33, 46, 0.78);
+        --story-border: rgba(190, 198, 212, 0.34);
         --story-left-1: #95bf47;
-        --story-left-2: #7f8fa8;
-        --story-left-3: #b1bacb;
-        --story-meta: #b8c1d2;
-        --story-summary: #e1e7f5;
-        --metric-chip-bg-1: rgba(149, 191, 71, 0.22);
-        --metric-chip-border-1: rgba(149, 191, 71, 0.4);
-        --metric-chip-text-1: #d7efab;
-        --metric-chip-bg-2: rgba(124, 140, 166, 0.22);
-        --metric-chip-border-2: rgba(124, 140, 166, 0.38);
-        --metric-chip-text-2: #d8e0ef;
-        --metric-chip-bg-3: rgba(159, 170, 190, 0.22);
-        --metric-chip-border-3: rgba(159, 170, 190, 0.38);
-        --metric-chip-text-3: #e6ebf6;
-        --tech-chip-bg: rgba(123, 137, 161, 0.22);
-        --tech-chip-border: rgba(123, 137, 161, 0.4);
-        --tech-chip-text: #e0e7f4;
-        --footer-bg: rgba(34, 41, 55, 0.84);
-        --contact-text: #dfe6f4;
-        --cta-bg: linear-gradient(130deg, rgba(149, 191, 71, 0.24) 0%, rgba(134, 150, 179, 0.2) 100%);
-        --cta-border: rgba(149, 191, 71, 0.44);
-        --cta-text: #f0ffd4;
+        --story-left-2: #7f8fa6;
+        --story-left-3: #b2bbcb;
+        --story-meta: #c1c9d9;
+        --story-summary: #e5ebf8;
+        --metric-chip-bg-1: rgba(149, 191, 71, 0.2);
+        --metric-chip-border-1: rgba(149, 191, 71, 0.36);
+        --metric-chip-text-1: #ddf1b7;
+        --metric-chip-bg-2: rgba(126, 141, 165, 0.2);
+        --metric-chip-border-2: rgba(126, 141, 165, 0.34);
+        --metric-chip-text-2: #dee5f2;
+        --metric-chip-bg-3: rgba(162, 173, 192, 0.2);
+        --metric-chip-border-3: rgba(162, 173, 192, 0.34);
+        --metric-chip-text-3: #e9eef8;
+        --tech-chip-bg: rgba(126, 141, 165, 0.2);
+        --tech-chip-border: rgba(126, 141, 165, 0.34);
+        --tech-chip-text: #e5ebf7;
+        --footer-bg: rgba(36, 43, 58, 0.82);
+        --contact-text: #e3e9f6;
+        --cta-bg: linear-gradient(130deg, rgba(149, 191, 71, 0.22) 0%, rgba(134, 150, 179, 0.18) 100%);
+        --cta-border: rgba(149, 191, 71, 0.4);
+        --cta-text: #f5ffdf;
       }}
 
       * {{
@@ -399,9 +395,9 @@ def render_html(
         border: 1px solid var(--line);
         border-radius: 3.2mm;
         background: var(--hero-bg);
-        padding: 3.1mm 3.6mm;
+        padding: 3.35mm 3.9mm;
         display: grid;
-        gap: 2.4mm;
+        gap: 2.2mm;
       }}
 
       .hero-top-row {{
@@ -427,8 +423,8 @@ def render_html(
         color: var(--badge-text);
         border: 1px solid var(--badge-border);
         border-radius: 999px;
-        padding: 0.9mm 2.2mm;
-        font-size: 2.5mm;
+        padding: 0.78mm 1.9mm;
+        font-size: 2.28mm;
         font-weight: 700;
         text-transform: uppercase;
         letter-spacing: 0.08em;
@@ -437,9 +433,9 @@ def render_html(
 
       .logo-lockup {{
         display: grid;
-        grid-template-columns: minmax(0, 1fr) auto minmax(36mm, 44mm);
+        grid-template-columns: minmax(0, 1fr) auto minmax(45mm, 54mm);
         align-items: center;
-        gap: 1.5mm;
+        gap: 1.9mm;
       }}
 
       .brand-divider {{
@@ -458,17 +454,17 @@ def render_html(
       }}
 
       .logo-shell.partner-shell {{
-        min-height: 13mm;
-        padding: 1.6mm 2.2mm;
+        min-height: 14.2mm;
+        padding: 1.85mm 2.55mm;
       }}
 
       .logo-shell.shopify-shell {{
-        min-height: 13mm;
-        padding: 1.6mm 2mm;
+        min-height: 14.2mm;
+        padding: 1.85mm 2.4mm;
       }}
 
       .partner-logo {{
-        max-height: 9.1mm;
+        max-height: 9.8mm;
         max-width: 100%;
         width: 100%;
         object-fit: contain;
@@ -476,25 +472,25 @@ def render_html(
       }}
 
       .shopify-logo {{
-        max-height: 8.3mm;
+        max-height: 8.9mm;
         max-width: 100%;
         width: 100%;
         object-fit: contain;
       }}
 
       h1 {{
-        margin: 1.5mm 0 0;
-        font-size: 6.4mm;
-        line-height: 1.03;
+        margin: 1.75mm 0 0;
+        font-size: 6.25mm;
+        line-height: 1.05;
         font-weight: 800;
-        letter-spacing: -0.02em;
+        letter-spacing: -0.015em;
         color: var(--title);
       }}
 
       .subtitle {{
         margin: 1.2mm 0 0;
-        font-size: 3.02mm;
-        line-height: 1.3;
+        font-size: 2.92mm;
+        line-height: 1.32;
         color: var(--subtitle);
       }}
 
@@ -906,7 +902,7 @@ def render_html(
       <section class="hero">
         <div class="hero-top-row">
           <p class="eyebrow">Shopify ecosystem one-pager</p>
-          <span class="doc-badge">Partner profile · {theme_label}</span>
+          <span class="doc-badge">Partner profile</span>
         </div>
         <div class="logo-lockup">
           <div class="logo-shell partner-shell">
@@ -1147,7 +1143,7 @@ def main() -> None:
     )
     parser.add_argument(
         "--theme",
-        default="aurora",
+        default="graphite",
         choices=["aurora", "slate", "graphite"],
         help="Design theme variant.",
     )
