@@ -407,4 +407,10 @@ def health() -> dict[str, str]:
 
 
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=5050, debug=True)
+    port = int(os.environ.get("PORT", "5050"))
+    debug = os.environ.get("FLASK_DEBUG", "").strip().lower() in {
+        "1",
+        "true",
+        "yes",
+    }
+    app.run(host="0.0.0.0", port=port, debug=debug)
