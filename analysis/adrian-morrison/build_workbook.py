@@ -1,42 +1,55 @@
 """
-Generates the Adrian Morrison 1-month paid-trial economics workbook.
+Adrian Morrison 1-month paid-trial economics workbook.
 
-Model context (reverse-engineered from the existing "US rate scenarios" analysis
-and confirmed with the requester):
+Switch FROM a 3-month paid trial ($90 / paid trial, ~31% trial->FP conversion)
+TO a 1-month paid trial paid PER full-price (FP) conversion (~49% conversion),
+across payouts of $250 / $300 / $350, at base (8,900) and stretch (12,000)
+paid-trial volumes.
 
-  * Affiliate is moving FROM a 3-month paid trial paid at $90 / paid trial
-    (historic ~31% trial->full-price conversion) TO a 1-month paid trial where
-    the affiliate is paid PER FULL-PRICE conversion (historic ~49% conversion).
-  * Volumes: 8,900 paid trials / mo (base), 12,000 paid trials / mo (stretch).
-  * iCAC = payout x CVR / IAF, where IAF (incrementality factor) = 0.38.
-        check: $207 -> $267, $225 -> $290, $250 -> $322  (matches prior deck)
-  * Monthly spend (new model) = payout x FP shops (pay per FP conversion).
-  * LTV per FP shop comes from:
-        shopify-dw.marketing.shop_ltv_mart_predictions_with_forecast
-    That value is the single yellow INPUT cell (Assumptions!B9). Every LTV /
-    LTV:CAC figure recomputes the moment it is filled in.
+Methodology (confirmed via the Slack threads + River's pull from the warehouse):
+  iGA  (incremental gross adds) = paid trials x IAF        (IAF = 0.38)
+  FP shops / mo                 = paid trials x CVR         (CVR = 0.49 for 1-mo)
+  Monthly spend (new model)     = payout x FP shops         (pay per FP conversion)
+  Monthly spend (current model) = $90 x paid trials         (pay per paid trial)
+  iCAC                          = monthly spend / iGA  ( = payout x CVR / IAF )
+        check: $250 x 0.49 / 0.38 = $322 ; $300 -> $387 ; $350 -> $451  vs $267 target
+  Cost per FP shop              = monthly spend / FP shops  ( = payout, new model )
+  LTV:CAC                       = LTV per shop / cost per FP shop
+        for the new model cost/FP = payout, so LTV:CAC = LTV / payout (CVR & IAF cancel)
 
-Everything in the Scenarios sheet is LIVE FORMULAS referencing the Assumptions
-sheet, so payouts, volumes, CVR, IAF and LTV can all be tweaked in Google Sheets.
+LTV per FP shop -- source:
+  shopify-dw.marketing.shop_ltv_mart_predictions_with_forecast
+  US, payback_channel_group = 'Affiliates',
+  per-shop = predicted_cumulative_total_profit_with_forecast / gross_adds_count_with_forecast
+    1-month-trial era (Apr-Nov 2024 cohorts):  $93.35 @12mo · $130.12 @24mo · $164.51 @36mo
+    3-month-trial era (Feb-Dec 2025 cohorts):  $74.87 @12mo · $128.52 @24mo · n.a. @36mo
+
+Defaults follow River's bolded recommendations: 1-month era = go-forward LTV,
+36-month = headline horizon, all-US, IAF held at 0.38 (+ sensitivity tab).
 """
 
 from openpyxl import Workbook
 from openpyxl.styles import Font, PatternFill, Alignment, Border, Side
 from openpyxl.comments import Comment
+from openpyxl.utils import get_column_letter
 
 # ---------------------------------------------------------------- styling
 TITLE = Font(bold=True, size=14, color="FFFFFF")
 HDR = Font(bold=True, size=11, color="FFFFFF")
 SUBHDR = Font(bold=True, size=11)
 BOLD = Font(bold=True)
-ITAL = Font(italic=True, color="666666")
+ITAL = Font(italic=True, color="666666", size=9)
 
-GREEN = PatternFill("solid", fgColor="2E7D32")
-DARK = PatternFill("solid", fgColor="37474F")
+DARK = PatternFill("solid", fgColor="263238")
 BLUE = PatternFill("solid", fgColor="1565C0")
+GREEN = PatternFill("solid", fgColor="2E7D32")
+TEAL = PatternFill("solid", fgColor="00695C")
+AMBER = PatternFill("solid", fgColor="EF6C00")
 GREYHDR = PatternFill("solid", fgColor="ECEFF1")
-INPUT = PatternFill("solid", fgColor="FFF59D")  # yellow = editable input
 SECTION = PatternFill("solid", fgColor="CFD8DC")
+ROWCUR = PatternFill("solid", fgColor="F5F5F5")
+ROWNEW = PatternFill("solid", fgColor="FFFFFF")
+INPUT = PatternFill("solid", fgColor="FFF59D")
 
 thin = Side(style="thin", color="B0BEC5")
 BORDER = Border(left=thin, right=thin, top=thin, bottom=thin)
@@ -47,13 +60,16 @@ RIGHT = Alignment(horizontal="right", vertical="center")
 CUR = '"$"#,##0'
 CUR2 = '"$"#,##0.00'
 PCT = '0%'
-PCT1 = '0.0%'
+PCTSIGN = '+0%;\\-0%;0%'
 RATIO = '0.00"x"'
 NUM = '#,##0'
+NETCUR = '"$"#,##0;[Red]-"$"#,##0'
 
 
-def style_cell(ws, ref, *, font=None, fill=None, align=None, fmt=None, border=True):
+def sc(ws, ref, *, font=None, fill=None, align=None, fmt=None, border=True, value=None):
     c = ws[ref]
+    if value is not None:
+        c.value = value
     if font:
         c.font = font
     if fill:
@@ -67,276 +83,297 @@ def style_cell(ws, ref, *, font=None, fill=None, align=None, fmt=None, border=Tr
     return c
 
 
-# ================================================================ ASSUMPTIONS
 wb = Workbook()
+
+# ================================================================ ASSUMPTIONS
 a = wb.active
 a.title = "Assumptions"
-
-a["A1"] = "Assumptions / Inputs  (edit these — everything else recalculates)"
-a.merge_cells("A1:C1")
-style_cell(a, "A1", font=TITLE, fill=DARK, align=LEFT)
-for col in ("B1", "C1"):
-    a[col].fill = DARK
-
-rows = [
-    ("Paid trials / mo — base (current)", 8900, NUM, "Held constant in base scenarios."),
-    ("Paid trials / mo — stretch", 12000, NUM, "Stretch volume scenario."),
-    ("1-month trial -> Full-Price CVR", 0.49, PCT, "Historic 1-mo trial conversion."),
-    ("Current 3-month trial CVR", 0.31, PCT, "Historic 3-mo trial conversion (~30%)."),
-    ("IAF (incrementality factor)", 0.38, "0.00", "iCAC = payout x CVR / IAF."),
-    ("iCAC target ($)", 267, CUR, "US iCAC benchmark."),
-    ("Current payout ($ / paid trial)", 90, CUR, "Current 3-mo model pays per paid trial."),
-    ("LTV per FP shop ($)", None, CUR,
-     "INPUT: predicted LTV per shop from "
-     "shopify-dw.marketing.shop_ltv_mart_predictions_with_forecast "
-     "(US new shops via Adrian's funnel). Fill this cell."),
-    ("New payout 1 ($ / FP conversion)", 250, CUR, "Per full-price conversion."),
-    ("New payout 2 ($ / FP conversion)", 300, CUR, "Per full-price conversion."),
-    ("New payout 3 ($ / FP conversion)", 350, CUR, "Per full-price conversion."),
-]
-for i, (label, val, fmt, note) in enumerate(rows, start=2):
-    style_cell(a, f"A{i}", font=BOLD, align=LEFT, fill=GREYHDR)
-    a[f"A{i}"] = label
-    c = style_cell(a, f"B{i}", align=RIGHT, fmt=fmt)
-    if val is not None:
-        c.value = val
-    style_cell(a, f"C{i}", font=ITAL, align=LEFT)
-    a[f"C{i}"] = note
-
-# Highlight the LTV input cell (row 9)
-ltv_cell = a["B9"]
-ltv_cell.fill = INPUT
-ltv_cell.font = Font(bold=True, color="B71C1C")
-ltv_cell.comment = Comment(
-    "Paste predicted LTV per shop from\n"
-    "shopify-dw.marketing.shop_ltv_mart_predictions_with_forecast\n"
-    "(filtered to US new shops acquired via Adrian Morrison's funnel).\n"
-    "Until filled, all LTV / LTV:CAC rows show '-'.",
-    "model")
-
-a.column_dimensions["A"].width = 34
-a.column_dimensions["B"].width = 14
-a.column_dimensions["C"].width = 60
-
-# Named references for readability in formulas
 A = "Assumptions!"
-TRIALS_BASE = f"{A}$B$2"
-TRIALS_STR = f"{A}$B$3"
-CVR_NEW = f"{A}$B$4"
-CVR_CUR = f"{A}$B$5"
-IAF = f"{A}$B$6"
-TARGET = f"{A}$B$7"
-PAY_CUR = f"{A}$B$8"
-LTV = f"{A}$B$9"
+
+a["A1"] = "Assumptions / Inputs  —  edit these, every other tab recalculates"
+a.merge_cells("A1:C1")
+sc(a, "A1", font=TITLE, fill=DARK, align=LEFT)
+sc(a, "B1", fill=DARK); sc(a, "C1", fill=DARK)
+sc(a, "A2", value="Input", font=HDR, fill=DARK, align=LEFT)
+sc(a, "B2", value="Value", font=HDR, fill=DARK, align=CENTER)
+sc(a, "C2", value="Source / note", font=HDR, fill=DARK, align=LEFT)
+
+# (row, label, value, fmt, source)  -- row index in sheet
+arows = {
+    3:  ("Paid trials / mo — base (current)", 8900, NUM, "Mar–Apr actuals; held constant in base scenarios."),
+    4:  ("Paid trials / mo — stretch", 12000, NUM, "Stretch volume scenario."),
+    5:  ("1-month trial → Full-Price CVR", 0.49, PCT, "Historic 1-mo trial conversion (vs ~31% at 3-mo)."),
+    6:  ("Current 3-month trial CVR", 0.31, PCT, "Historic 3-mo trial conversion (~30%)."),
+    7:  ("IAF — incrementality factor (current)", 0.38, "0.00", "iGA = paid trials × IAF; iCAC = payout × CVR / IAF."),
+    8:  ("iCAC target (US, $)", 267, CUR, "US iCAC benchmark."),
+    9:  ("Current payout ($ / paid trial)", 90, CUR, "Current 3-mo model pays per paid trial."),
+    10: ("Payout 1 ($ / FP conversion)", 250, CUR, "New 1-mo model pays per full-price conversion."),
+    11: ("Payout 2 ($ / FP conversion)", 300, CUR, "New 1-mo model pays per full-price conversion."),
+    12: ("Payout 3 ($ / FP conversion)", 350, CUR, "New 1-mo model pays per full-price conversion."),
+    13: ("LTV/shop — 1-mo era @12mo ($)", 93.35, CUR2, "shop_ltv_mart_predictions_with_forecast · US · Affiliates · Apr–Nov 2024 cohorts."),
+    14: ("LTV/shop — 1-mo era @24mo ($)", 130.12, CUR2, "Same source. Go-forward LTV (proposal restores 1-mo trial)."),
+    15: ("LTV/shop — 1-mo era @36mo ($)  [HEADLINE]", 164.51, CUR2, "Same source. Headline horizon (matches $267 iCAC basis)."),
+    16: ("LTV/shop — 3-mo era @12mo ($)", 74.87, CUR2, "Same source · Feb–Dec 2025 cohorts. Current state."),
+    17: ("LTV/shop — 3-mo era @24mo ($)", 128.52, CUR2, "Same source. Current state."),
+    18: ("LTV/shop — 3-mo era @36mo ($)", None, CUR2, "Not yet aged to 36mo — left blank → shows 'n.a.'"),
+    19: ("IAF sensitivity — low", 0.38, "0.00", "Current incrementality."),
+    20: ("IAF sensitivity — mid", 0.60, "0.00", "If a fresh 1-mo funnel re-baselines incrementality."),
+    21: ("IAF sensitivity — high", 0.75, "0.00", "Upper incrementality scenario."),
+}
+for r, (label, val, fmt, src) in arows.items():
+    sc(a, f"A{r}", value=label, font=BOLD, align=LEFT, fill=GREYHDR)
+    cell = sc(a, f"B{r}", align=RIGHT, fmt=fmt)
+    if val is not None:
+        cell.value = val
+    sc(a, f"C{r}", value=src, font=ITAL, align=LEFT)
+
+a["B18"].fill = INPUT  # 3-mo @36mo (deliberately blank)
+a.column_dimensions["A"].width = 38
+a.column_dimensions["B"].width = 13
+a.column_dimensions["C"].width = 72
+
+# absolute refs
+TR_BASE, TR_STR = f"{A}$B$3", f"{A}$B$4"
+CVR_NEW, CVR_CUR = f"{A}$B$5", f"{A}$B$6"
+IAF, TARGET = f"{A}$B$7", f"{A}$B$8"
+PAY_CUR = f"{A}$B$9"
+PAY = {250: f"{A}$B$10", 300: f"{A}$B$11", 350: f"{A}$B$12"}
+LTV_1MO = {12: f"{A}$B$13", 24: f"{A}$B$14", 36: f"{A}$B$15"}
+LTV_3MO = {12: f"{A}$B$16", 24: f"{A}$B$17", 36: f"{A}$B$18"}
+IAF_SENS = [f"{A}$B$19", f"{A}$B$20", f"{A}$B$21"]
 
 # ================================================================ SCENARIOS
 s = wb.create_sheet("Scenarios")
 
-# columns: A label | B Current | C-E base(8900) 250/300/350 | F-H stretch(12000) 250/300/350
-cols = ["A", "B", "C", "D", "E", "F", "G", "H"]
-# new-model columns -> (payout assumption cell, paid-trials cell)
-new_cols = {
-    "C": (f"{A}$B$10", TRIALS_BASE),
-    "D": (f"{A}$B$11", TRIALS_BASE),
-    "E": (f"{A}$B$12", TRIALS_BASE),
-    "F": (f"{A}$B$10", TRIALS_STR),
-    "G": (f"{A}$B$11", TRIALS_STR),
-    "H": (f"{A}$B$12", TRIALS_STR),
+# column layout
+headers = [
+    ("A", "Scenario", 22, LEFT),
+    ("B", "Trial era", 10, CENTER),
+    ("C", "Paid trials / mo", 10, CENTER),
+    ("D", "Payout ($)", 9, CENTER),
+    ("E", "Payout basis", 12, CENTER),
+    ("F", "Trial→FP CVR", 9, CENTER),
+    ("G", "FP shops / mo", 9, CENTER),
+    ("H", "iGA / mo", 9, CENTER),
+    ("I", "Monthly spend", 12, CENTER),
+    ("J", "Annual spend", 12, CENTER),
+    ("K", "Cost / FP shop", 9, CENTER),
+    ("L", "iCAC", 9, CENTER),
+    ("M", "iCAC vs $267", 9, CENTER),
+    ("N", "LTV/shop @12mo", 9, CENTER),
+    ("O", "LTV/shop @24mo", 9, CENTER),
+    ("P", "LTV/shop @36mo", 9, CENTER),
+    ("Q", "LTV:CAC @12mo", 9, CENTER),
+    ("R", "LTV:CAC @24mo", 9, CENTER),
+    ("S", "LTV:CAC @36mo", 9, CENTER),
+    ("T", "Total LTV/mo @36mo", 13, CENTER),
+    ("U", "Total LTV/yr @36mo", 13, CENTER),
+    ("V", "Net contrib/shop @36mo", 11, CENTER),
+    ("W", "Net contrib/yr @36mo", 13, CENTER),
+]
+last = "W"
+
+s["A1"] = "Adrian Morrison — 1-Month Paid-Trial Economics  (iCAC · LTV · LTV:CAC by payout & volume)"
+s.merge_cells(f"A1:{last}1")
+sc(s, "A1", font=TITLE, fill=DARK, align=LEFT)
+for col, *_ in headers[1:]:
+    sc(s, f"{col}1", fill=DARK)
+
+# group header row 2
+groups = [
+    ("A", "E", "SCENARIO", SECTION, SUBHDR),
+    ("F", "H", "WHAT WE GET", BLUE, HDR),
+    ("I", "M", "WHAT IT COSTS", AMBER, HDR),
+    ("N", "S", "LTV PER SHOP  &  LTV:CAC", TEAL, HDR),
+    ("T", "W", "TOTALS & RETURNS", GREEN, HDR),
+]
+for c0, c1, txt, fill, font in groups:
+    s.merge_cells(f"{c0}2:{c1}2")
+    sc(s, f"{c0}2", value=txt, font=font, fill=fill, align=CENTER)
+    a0, a1 = ord(c0), ord(c1)
+    for o in range(a0, a1 + 1):
+        sc(s, f"{chr(o)}2", fill=fill)
+
+# column header row 3
+for col, label, width, align in headers:
+    sc(s, f"{col}3", value=label, font=SUBHDR, fill=GREYHDR, align=CENTER)
+    s.column_dimensions[col].width = width
+
+# scenario definitions
+scenarios = [
+    dict(name="Current (3-mo @ $90)", era="3-mo", trials=TR_BASE, payout=PAY_CUR,
+         cvr=CVR_CUR, basis="per paid trial", spend="trial", ltv=LTV_3MO, cur=True),
+    dict(name="$250 / FP · base 8.9k", era="1-mo", trials=TR_BASE, payout=PAY[250],
+         cvr=CVR_NEW, basis="per FP conv.", spend="fp", ltv=LTV_1MO, cur=False),
+    dict(name="$300 / FP · base 8.9k", era="1-mo", trials=TR_BASE, payout=PAY[300],
+         cvr=CVR_NEW, basis="per FP conv.", spend="fp", ltv=LTV_1MO, cur=False),
+    dict(name="$350 / FP · base 8.9k", era="1-mo", trials=TR_BASE, payout=PAY[350],
+         cvr=CVR_NEW, basis="per FP conv.", spend="fp", ltv=LTV_1MO, cur=False),
+    dict(name="$250 / FP · stretch 12k", era="1-mo", trials=TR_STR, payout=PAY[250],
+         cvr=CVR_NEW, basis="per FP conv.", spend="fp", ltv=LTV_1MO, cur=False),
+    dict(name="$300 / FP · stretch 12k", era="1-mo", trials=TR_STR, payout=PAY[300],
+         cvr=CVR_NEW, basis="per FP conv.", spend="fp", ltv=LTV_1MO, cur=False),
+    dict(name="$350 / FP · stretch 12k", era="1-mo", trials=TR_STR, payout=PAY[350],
+         cvr=CVR_NEW, basis="per FP conv.", spend="fp", ltv=LTV_1MO, cur=False),
+]
+
+fmt_by_col = {
+    "C": NUM, "D": CUR, "F": PCT, "G": NUM, "H": NUM, "I": CUR, "J": CUR,
+    "K": CUR, "L": CUR, "M": PCTSIGN, "N": CUR2, "O": CUR2, "P": CUR2,
+    "Q": RATIO, "R": RATIO, "S": RATIO, "T": CUR, "U": CUR, "V": NETCUR, "W": NETCUR,
 }
 
-# ---- title
-s["A1"] = "Adrian Morrison — 1-Month Paid-Trial Economics (iCAC & LTV by payout)"
-s.merge_cells("A1:H1")
-style_cell(s, "A1", font=TITLE, fill=DARK, align=LEFT)
-for col in cols[1:]:
-    s[f"{col}1"].fill = DARK
+r = 4
+for sd in scenarios:
+    fill = ROWCUR if sd["cur"] else ROWNEW
+    ltv36 = sd["ltv"][36]
+    guard36 = f'IF({ltv36}="","n.a.",'  # close with )
+    # text/value cells
+    sc(s, f"A{r}", value=sd["name"], font=BOLD, align=LEFT, fill=fill)
+    sc(s, f"B{r}", value=sd["era"], align=CENTER, fill=fill)
+    sc(s, f"E{r}", value=sd["basis"], align=CENTER, fill=fill)
+    # formula cells
+    f = {
+        "C": f"={sd['trials']}",
+        "D": f"={sd['payout']}",
+        "F": f"={sd['cvr']}",
+        "G": f"=C{r}*F{r}",
+        "H": f"=C{r}*{IAF}",
+        "I": (f"=D{r}*C{r}" if sd["spend"] == "trial" else f"=D{r}*G{r}"),
+        "J": f"=I{r}*12",
+        "K": f"=I{r}/G{r}",
+        "L": f"=I{r}/H{r}",
+        "M": f"=L{r}/{TARGET}-1",
+        "N": f"={sd['ltv'][12]}",
+        "O": f"={sd['ltv'][24]}",
+        "P": f"={guard36}{ltv36})",
+        "Q": f"=N{r}/K{r}",
+        "R": f"=O{r}/K{r}",
+        "S": f"={guard36}{ltv36}/K{r})",
+        "T": f"={guard36}{ltv36}*G{r})",
+        "U": f"={guard36}{ltv36}*G{r}*12)",
+        "V": f"={guard36}{ltv36}-K{r})",
+        "W": f"={guard36}({ltv36}-K{r})*G{r}*12)",
+    }
+    for col, formula in f.items():
+        cell = sc(s, f"{col}{r}", value=formula, align=RIGHT, fmt=fmt_by_col[col], fill=fill)
+        if col in ("L", "S", "W"):
+            cell.font = BOLD
+    r += 1
 
-# ---- group header row (2)
-s["A2"] = ""
-style_cell(s, "A2", fill=GREYHDR)
-s["B2"] = "Current (Mar–Apr)"
-style_cell(s, "B2", font=HDR, fill=DARK, align=CENTER)
-s.merge_cells("C2:E2")
-s["C2"] = "Base volume — 8,900 paid trials / mo"
-style_cell(s, "C2", font=HDR, fill=BLUE, align=CENTER)
-for col in ("D", "E"):
-    s[f"{col}2"].fill = BLUE
-s.merge_cells("F2:H2")
-s["F2"] = "Stretch volume — 12,000 paid trials / mo"
-style_cell(s, "F2", font=HDR, fill=GREEN, align=CENTER)
-for col in ("G", "H"):
-    s[f"{col}2"].fill = GREEN
+# notes under the table
+note_r = r + 1
+notes = [
+    "HEADLINE: at 36-mo LTV (~$164.51/shop) the funnel is LTV-negative at every payout — LTV:CAC = LTV ÷ payout = 0.66 ($250) · 0.55 ($300) · 0.47 ($350); iCAC runs 21–69% over the $267 target.",
+    "BUT the proposal still wins on both structural axes vs the 3-mo status quo: CVR 31% → 49%, and 1-mo-era per-shop LTV is higher ($93.35 vs $74.87 @12mo).",
+    "iGA (incremental gross adds) = paid trials × IAF; iCAC = monthly spend ÷ iGA = payout × CVR ÷ IAF. LTV:CAC uses cost per FP shop (= payout for the new model).",
+    "Current state uses 3-mo-era LTV; @36mo not yet aged → shows 'n.a.'. New scenarios use 1-mo-era (go-forward) LTV. All-US.",
+]
+for i, n in enumerate(notes):
+    cell = s[f"A{note_r + i}"]
+    cell.value = ("• " + n)
+    cell.font = ITAL
+    s.merge_cells(f"A{note_r + i}:{last}{note_r + i}")
+    cell.alignment = LEFT
 
-# ---- payout header row (3)
-s["A3"] = "Payout"
-style_cell(s, "A3", font=SUBHDR, fill=GREYHDR, align=LEFT)
-s["B3"] = "$90 / paid trial"
-style_cell(s, "B3", font=HDR, fill=DARK, align=CENTER)
-payout_hdr = {"C": "$250 / FP", "D": "$300 / FP", "E": "$350 / FP",
-              "F": "$250 / FP", "G": "$300 / FP", "H": "$350 / FP"}
-for col, txt in payout_hdr.items():
-    s[f"{col}3"] = txt
-    fill = BLUE if col in ("C", "D", "E") else GREEN
-    style_cell(s, f"{col}3", font=HDR, fill=fill, align=CENTER)
+s.freeze_panes = "C4"
 
-row = 4
+# ================================================================ IAF SENSITIVITY
+iz = wb.create_sheet("IAF sensitivity")
+iz["A1"] = "IAF sensitivity — iCAC moves with incrementality (LTV:CAC does not)"
+iz.merge_cells("A1:E1")
+sc(iz, "A1", font=TITLE, fill=DARK, align=LEFT)
+for col in ("B", "C", "D", "E"):
+    sc(iz, f"{col}1", fill=DARK)
 
+iz["A2"] = ("LTV:CAC = LTV ÷ payout, so it is INDEPENDENT of IAF: $250→0.66 · $300→0.55 · $350→0.47 (36-mo). "
+            "IAF only changes iCAC and iCAC-vs-target below.")
+iz.merge_cells("A2:E2")
+sc(iz, "A2", font=ITAL, align=LEFT)
 
-def section(title):
-    global row
-    s[f"A{row}"] = title
-    s.merge_cells(f"A{row}:H{row}")
-    style_cell(s, f"A{row}", font=SUBHDR, fill=SECTION, align=LEFT)
-    for col in cols[1:]:
-        s[f"{col}{row}"].fill = SECTION
-    row += 1
-
-
-def metric(label, builder, fmt, *, note=None, bold=False):
-    """builder(col) -> formula string (without '='), or None to leave blank."""
-    global row
-    style_cell(s, f"A{row}", font=BOLD if bold else None, align=LEFT, fill=GREYHDR)
-    s[f"A{row}"] = label
-    if note:
-        s[f"A{row}"].comment = Comment(note, "model")
-    for col in cols[1:]:
-        f = builder(col)
-        c = style_cell(s, f"{col}{row}", align=RIGHT, fmt=fmt)
-        if f is not None:
-            c.value = "=" + f
-        if bold:
-            c.font = BOLD
-    row += 1
-
-
-def rate_ref(col):
-    if col == "B":
-        return PAY_CUR
-    return new_cols[col][0]
-
-
-def trials_ref(col):
-    if col == "B":
-        return TRIALS_BASE
-    return new_cols[col][1]
+iaf_labels = ["IAF 0.38 (low)", "IAF 0.60 (mid)", "IAF 0.75 (high)"]
+payout_refs = [PAY[250], PAY[300], PAY[350]]
+payout_lbls = ["$250 / FP", "$300 / FP", "$350 / FP"]
 
 
-def cvr_ref(col):
-    if col == "B":
-        return CVR_CUR
-    return CVR_NEW
+def iaf_block(title_row, metric):
+    sc(iz, f"A{title_row}", value=("iCAC ($)" if metric == "icac" else "iCAC vs $267 target"),
+       font=HDR, fill=(BLUE if metric == "icac" else AMBER), align=LEFT)
+    for j in range(1, 5):
+        sc(iz, f"{get_column_letter(j+0)}{title_row}",
+           fill=(BLUE if metric == "icac" else AMBER))
+    hr = title_row + 1
+    sc(iz, f"A{hr}", value="Payout \\ IAF", font=SUBHDR, fill=GREYHDR, align=LEFT)
+    for k, lab in enumerate(iaf_labels):
+        sc(iz, f"{get_column_letter(2+k)}{hr}", value=lab, font=SUBHDR, fill=GREYHDR, align=CENTER)
+    for pi, (pref, plab) in enumerate(zip(payout_refs, payout_lbls)):
+        rr = hr + 1 + pi
+        sc(iz, f"A{rr}", value=plab, font=BOLD, fill=GREYHDR, align=LEFT)
+        for k in range(3):
+            col = get_column_letter(2 + k)
+            icac = f"{pref}*{CVR_NEW}/{IAF_SENS[k]}"
+            if metric == "icac":
+                formula, fmt = f"={icac}", CUR
+            else:
+                formula, fmt = f"=({icac})/{TARGET}-1", PCTSIGN
+            sc(iz, f"{col}{rr}", value=formula, align=RIGHT, fmt=fmt)
+    return hr + 1 + 3
 
 
-# cell helpers (current-row references)
-def C(col, r):
-    return f"{col}{r}"
-
-
-# ---- WHAT WE GET
-section("WHAT WE GET")
-r_rate = row
-metric("Payout rate ($)", lambda c: rate_ref(c), CUR)
-r_trials = row
-metric("Paid trials / mo", lambda c: trials_ref(c), NUM)
-r_cvr = row
-metric("Trial -> Full-Price CVR", lambda c: cvr_ref(c), PCT)
-r_fp = row
-metric("Full-Price shops / mo", lambda c: f"{C(c, r_trials)}*{C(c, r_cvr)}", NUM, bold=True)
-r_fpgain = row
-metric("FP shops gained / mo vs current",
-       lambda c: f"{C(c, r_fp)}-$B${r_fp}", NUM)
-metric("FP shops gained / yr vs current",
-       lambda c: f"({C(c, r_fp)}-$B${r_fp})*12", NUM)
-
-# ---- WHAT IT COSTS
-section("WHAT IT COSTS")
-r_spend = row
-metric("Monthly spend ($)",
-       lambda c: (f"{C(c, r_rate)}*{C(c, r_trials)}" if c == "B"
-                  else f"{C(c, r_rate)}*{C(c, r_fp)}"),
-       CUR,
-       note="Current pays per paid trial ($90 x trials). New model pays per "
-            "full-price conversion (payout x FP shops).")
-metric("Annual spend ($)", lambda c: f"{C(c, r_spend)}*12", CUR)
-r_cpfp = row
-metric("Cost per FP shop ($)", lambda c: f"{C(c, r_spend)}/{C(c, r_fp)}", CUR)
-r_icac = row
-metric("iCAC ($)",
-       lambda c: (f"{C(c, r_rate)}/{IAF}" if c == "B"
-                  else f"{C(c, r_rate)}*{C(c, r_cvr)}/{IAF}"),
-       CUR, bold=True,
-       note="iCAC = payout x CVR / IAF (new model). Current = $90 / IAF. "
-            "Reported Mar–Apr actual iCAC was ~$241.")
-metric("iCAC vs $267 target", lambda c: f"{C(c, r_icac)}/{TARGET}-1", PCT,
-       note="Positive = over target, negative = under target.")
-
-# ---- LTV
-section("LTV  (fill Assumptions!B9 to populate)")
-r_ltvshop = row
-metric("LTV per FP shop ($)", lambda c: f'IF({LTV}="","-",{LTV})', CUR,
-       note="From shopify-dw.marketing.shop_ltv_mart_predictions_with_forecast.")
-metric("Total LTV of new FP shops / mo ($)",
-       lambda c: f'IF({LTV}="","-",{LTV}*{C(c, r_fp)})', CUR)
-metric("Total LTV of new FP shops / yr ($)",
-       lambda c: f'IF({LTV}="","-",{LTV}*{C(c, r_fp)}*12)', CUR)
-metric("LTV : iCAC ratio",
-       lambda c: f'IF({LTV}="","-",{LTV}/{C(c, r_icac)})', RATIO, bold=True,
-       note="Lifetime value vs incremental CAC.")
-metric("LTV : cost-per-FP-shop ratio",
-       lambda c: f'IF({LTV}="","-",{LTV}/{C(c, r_cpfp)})', RATIO)
-metric("Net LTV per FP shop ($)  (LTV - cost/FP shop)",
-       lambda c: f'IF({LTV}="","-",{LTV}-{C(c, r_cpfp)})', CUR)
-
-# widths
-s.column_dimensions["A"].width = 38
-for col in cols[1:]:
-    s.column_dimensions[col].width = 16
-s.freeze_panes = "B4"
+end1 = iaf_block(4, "icac")
+iaf_block(end1 + 2, "target")
+iz.column_dimensions["A"].width = 18
+for col in ("B", "C", "D"):
+    iz.column_dimensions[col].width = 15
 
 # ================================================================ README
 rd = wb.create_sheet("README")
 rd["A1"] = "How this workbook works"
-style_cell(rd, "A1", font=TITLE, fill=DARK, align=LEFT)
-notes = [
+sc(rd, "A1", font=TITLE, fill=DARK, align=LEFT, border=False)
+lines = [
+    "", "PURPOSE",
+    "Affiliate economics for Adrian Morrison switching from a 3-month paid trial ($90/paid trial,",
+    "~31% conversion) to a 1-month paid trial paid per full-price conversion (~49%), at payouts of",
+    "$250 / $300 / $350 and at base (8,900) and stretch (12,000) monthly paid-trial volumes.",
     "",
-    "PURPOSE",
-    "Compare Adrian Morrison's affiliate economics when switching from a 3-month",
-    "paid trial ($90 / paid trial, ~31% conversion) to a 1-month paid trial paid",
-    "PER full-price conversion (~49% conversion), across payouts of $250/$300/$350.",
-    "",
-    "WHAT TO EDIT",
-    "Only the Assumptions tab. Everything on Scenarios is live formulas.",
-    "The yellow cell Assumptions!B9 (LTV per FP shop) is the one external input —",
-    "paste the predicted LTV per shop from:",
-    "    shopify-dw.marketing.shop_ltv_mart_predictions_with_forecast",
-    "(filtered to US new shops acquired through Adrian's funnel).",
-    "Until it is filled, all LTV / LTV:CAC rows display '-'.",
+    "TABS",
+    "  Assumptions      – every input + source. Edit here; all other tabs recalculate.",
+    "  Scenarios        – current state + 3 payouts × 2 volumes, with iCAC, LTV@12/24/36, LTV:CAC, net contribution.",
+    "  IAF sensitivity  – how iCAC moves at IAF 0.38 / 0.60 / 0.75 (LTV:CAC is IAF-independent).",
     "",
     "KEY FORMULAS",
-    "  FP shops / mo      = paid trials x CVR",
-    "  Monthly spend      = payout x FP shops        (new model, paid per FP)",
-    "                     = $90 x paid trials         (current model)",
-    "  Cost per FP shop   = monthly spend / FP shops",
-    "  iCAC               = payout x CVR / IAF        (IAF = 0.38)",
-    "  LTV : iCAC         = LTV per FP shop / iCAC",
+    "  FP shops/mo    = paid trials × CVR",
+    "  iGA/mo         = paid trials × IAF            (incremental gross adds)",
+    "  Monthly spend  = payout × FP shops            (new model; current = $90 × paid trials)",
+    "  Cost/FP shop   = monthly spend / FP shops     (= payout for the new model)",
+    "  iCAC           = monthly spend / iGA          (= payout × CVR / IAF)",
+    "  LTV:CAC        = LTV per shop / cost per FP shop",
     "",
-    "VALIDATION (against prior US rate-scenarios deck)",
-    "  $207 -> iCAC $267 | $225 -> iCAC $290 | $250 -> iCAC $322   (matches)",
+    "VALIDATION",
+    "  iCAC: $250→$322 · $300→$387 · $350→$451 (vs $267 target).",
+    "  LTV:CAC @36mo: $250→0.66 · $300→0.55 · $350→0.47.   (matches River's Slack figures)",
     "",
-    "NOTE ON 'CURRENT' COLUMN",
-    "Formula-derived current iCAC = $90 / 0.38 = ~$237; the deck's reported",
-    "Mar–Apr actual was ~$241 (minor real-world variance).",
+    "LTV SOURCE",
+    "  shopify-dw.marketing.shop_ltv_mart_predictions_with_forecast",
+    "  US · payback_channel_group = 'Affiliates' ·",
+    "  per-shop = predicted_cumulative_total_profit_with_forecast / gross_adds_count_with_forecast",
+    "    1-mo era (Apr–Nov 2024): $93.35 / $130.12 / $164.51 @ 12/24/36mo   (go-forward)",
+    "    3-mo era (Feb–Dec 2025): $74.87 / $128.52 / n.a.    @ 12/24/36mo   (current state)",
     "",
-    "LTV ACCESS NOTE",
-    "This workbook was generated in an environment without shopify-dw / BigQuery",
-    "credentials, so the LTV value could not be auto-queried. It is wired as an",
-    "input cell so it populates instantly once the value is entered.",
+    "DEFAULTS APPLIED (per River's recommendation)",
+    "  Volume unit = paid trials (49% applied directly to trials).",
+    "  Headline horizon = 36 months. LTV era = 1-mo (go-forward). Geo = all-US. IAF = 0.38 (+ sensitivity tab).",
+    "",
+    "HEADLINE TAKEAWAY",
+    "  On a straight per-shop basis the funnel is LTV-negative at all three payouts (36-mo LTV ~$165 < payout),",
+    "  and iCAC is 21–69% over target — i.e. higher payouts buy the SAME customers for more. The structural",
+    "  win is still real: compressing 3-mo → 1-mo lifts CVR (31%→49%) AND per-shop LTV ($75→$93 @12mo).",
 ]
-for i, line in enumerate(notes, start=2):
+for i, line in enumerate(lines, start=2):
     rd[f"A{i}"] = line
     if line.isupper() and line.strip():
         rd[f"A{i}"].font = BOLD
-rd.column_dimensions["A"].width = 90
+rd.column_dimensions["A"].width = 105
 
 wb.save("analysis/adrian-morrison/adrian_morrison_1mo_trial_icac_ltv.xlsx")
 print("workbook written")
