@@ -116,9 +116,14 @@ arows = {
     16: ("LTV/shop — 3-mo era @12mo ($)", 74.87, CUR2, "Same source · Feb–Dec 2025 cohorts. Current state."),
     17: ("LTV/shop — 3-mo era @24mo ($)", 128.52, CUR2, "Same source. Current state."),
     18: ("LTV/shop — 3-mo era @36mo ($)", None, CUR2, "Not yet aged to 36mo — left blank → shows 'n.a.'"),
-    19: ("IAF sensitivity — low", 0.38, "0.00", "Current incrementality."),
-    20: ("IAF sensitivity — mid", 0.60, "0.00", "If a fresh 1-mo funnel re-baselines incrementality."),
-    21: ("IAF sensitivity — high", 0.75, "0.00", "Upper incrementality scenario."),
+    19: ("LTV realization factor (go-forward)", 1.00, "0%",
+         "STRESS-TEST LEVER for the lead's 'LTV drops with a 1-mo trial' concern. "
+         "% of observed 1-mo-era LTV assumed to hold. The observed number already includes "
+         "marginal (lower-intent) converters, so 100% = no extra haircut; lower it (e.g. 80%) "
+         "to be conservative for marginal-converter dilution / forecast risk."),
+    20: ("IAF sensitivity — low", 0.38, "0.00", "Current incrementality."),
+    21: ("IAF sensitivity — mid", 0.60, "0.00", "If a fresh 1-mo funnel re-baselines incrementality."),
+    22: ("IAF sensitivity — high", 0.75, "0.00", "Upper incrementality scenario."),
 }
 for r, (label, val, fmt, src) in arows.items():
     sc(a, f"A{r}", value=label, font=BOLD, align=LEFT, fill=GREYHDR)
@@ -128,6 +133,7 @@ for r, (label, val, fmt, src) in arows.items():
     sc(a, f"C{r}", value=src, font=ITAL, align=LEFT)
 
 a["B18"].fill = INPUT  # 3-mo @36mo (deliberately blank)
+a["B19"].fill = INPUT  # LTV realization factor lever
 a.column_dimensions["A"].width = 38
 a.column_dimensions["B"].width = 13
 a.column_dimensions["C"].width = 72
@@ -140,7 +146,8 @@ PAY_CUR = f"{A}$B$9"
 PAY = {250: f"{A}$B$10", 300: f"{A}$B$11", 350: f"{A}$B$12"}
 LTV_1MO = {12: f"{A}$B$13", 24: f"{A}$B$14", 36: f"{A}$B$15"}
 LTV_3MO = {12: f"{A}$B$16", 24: f"{A}$B$17", 36: f"{A}$B$18"}
-IAF_SENS = [f"{A}$B$19", f"{A}$B$20", f"{A}$B$21"]
+REAL = f"{A}$B$19"  # LTV realization factor (go-forward stress-test lever)
+IAF_SENS = [f"{A}$B$20", f"{A}$B$21", f"{A}$B$22"]
 
 # ================================================================ SCENARIOS
 s = wb.create_sheet("Scenarios")
@@ -228,6 +235,9 @@ for sd in scenarios:
     fill = ROWCUR if sd["cur"] else ROWNEW
     ltv36 = sd["ltv"][36]
     guard36 = f'IF({ltv36}="","n.a.",'  # close with )
+    # 1-mo (go-forward) LTV gets the realization-factor lever; current/3-mo = actuals
+    fac = "" if sd["cur"] else f"*{REAL}"
+    l12, l24, l36 = (sd["ltv"][12] + fac), (sd["ltv"][24] + fac), (ltv36 + fac)
     # text/value cells
     sc(s, f"A{r}", value=sd["name"], font=BOLD, align=LEFT, fill=fill)
     sc(s, f"B{r}", value=sd["era"], align=CENTER, fill=fill)
@@ -244,16 +254,16 @@ for sd in scenarios:
         "K": f"=I{r}/G{r}",
         "L": f"=I{r}/H{r}",
         "M": f"=L{r}/{TARGET}-1",
-        "N": f"={sd['ltv'][12]}",
-        "O": f"={sd['ltv'][24]}",
-        "P": f"={guard36}{ltv36})",
+        "N": f"={l12}",
+        "O": f"={l24}",
+        "P": f"={guard36}{l36})",
         "Q": f"=N{r}/K{r}",
         "R": f"=O{r}/K{r}",
-        "S": f"={guard36}{ltv36}/K{r})",
-        "T": f"={guard36}{ltv36}*G{r})",
-        "U": f"={guard36}{ltv36}*G{r}*12)",
-        "V": f"={guard36}{ltv36}-K{r})",
-        "W": f"={guard36}({ltv36}-K{r})*G{r}*12)",
+        "S": f"={guard36}{l36}/K{r})",
+        "T": f"={guard36}{l36}*G{r})",
+        "U": f"={guard36}{l36}*G{r}*12)",
+        "V": f"={guard36}{l36}-K{r})",
+        "W": f"={guard36}({l36}-K{r})*G{r}*12)",
     }
     for col, formula in f.items():
         cell = sc(s, f"{col}{r}", value=formula, align=RIGHT, fmt=fmt_by_col[col], fill=fill)
@@ -268,6 +278,7 @@ notes = [
     "BUT the proposal still wins on both structural axes vs the 3-mo status quo: CVR 31% → 49%, and 1-mo-era per-shop LTV is higher ($93.35 vs $74.87 @12mo).",
     "iGA (incremental gross adds) = paid trials × IAF; iCAC = monthly spend ÷ iGA = payout × CVR ÷ IAF. LTV:CAC uses cost per FP shop (= payout for the new model).",
     "Current state uses 3-mo-era LTV; @36mo not yet aged → shows 'n.a.'. New scenarios use 1-mo-era (go-forward) LTV. All-US.",
+    "LTV-DROP CONCERN (lead): go-forward LTV here is the 1-mo-era observed value, which ALREADY includes lower-intent marginal converters. To stress-test further, set 'LTV realization factor' on Assumptions (e.g. 80%) — see the LTV sensitivity tab for the full grid and breakeven.",
 ]
 for i, n in enumerate(notes):
     cell = s[f"A{note_r + i}"]
@@ -326,6 +337,76 @@ iz.column_dimensions["A"].width = 18
 for col in ("B", "C", "D"):
     iz.column_dimensions[col].width = 15
 
+# ================================================================ LTV SENSITIVITY
+lv = wb.create_sheet("LTV sensitivity")
+lv["A1"] = "LTV sensitivity — addressing 'LTV drops with a 1-month trial'"
+lv.merge_cells("A1:F1")
+sc(lv, "A1", font=TITLE, fill=DARK, align=LEFT)
+for col in ("B", "C", "D", "E", "F"):
+    sc(lv, f"{col}1", fill=DARK)
+
+lv["A2"] = ("The lead's concern is marginal-converter dilution: a shorter trial converts more people (31%→49%), "
+            "and the extra converters can be lower-LTV. The 1-mo-era LTV we use ($164.51 @36mo) already reflects that "
+            "regime. Below: LTV:CAC and net contribution per shop @36mo as the go-forward LTV is haircut from 100% "
+            "down to 60% of observed. BREAKEVEN (LTV:CAC = 1.0) requires LTV/shop = payout.")
+lv.merge_cells("A2:F4")
+sc(lv, "A2", font=ITAL, align=LEFT)
+
+real_facs = [1.30, 1.00, 0.85, 0.70, 0.60]
+fac_lbls = ["130%", "100% (observed)", "85%", "70%", "60%"]
+L36 = LTV_1MO[36]  # observed 1-mo era 36mo LTV
+
+
+def ltv_block(title_row, metric):
+    is_ratio = metric == "ratio"
+    title = "LTV:CAC @36mo  (= LTV × factor ÷ payout)" if is_ratio else "Net contribution / shop @36mo ($)"
+    sc(lv, f"A{title_row}", value=title, font=HDR, fill=(TEAL if is_ratio else GREEN), align=LEFT)
+    for j in range(1, 7):
+        sc(lv, f"{get_column_letter(j)}{title_row}", fill=(TEAL if is_ratio else GREEN))
+    hr = title_row + 1
+    sc(lv, f"A{hr}", value="Payout \\ LTV realization", font=SUBHDR, fill=GREYHDR, align=LEFT)
+    for k, lab in enumerate(fac_lbls):
+        sc(lv, f"{get_column_letter(2+k)}{hr}", value=lab, font=SUBHDR, fill=GREYHDR, align=CENTER)
+    for pi, (pref, plab) in enumerate(zip(payout_refs, payout_lbls)):
+        rr = hr + 1 + pi
+        sc(lv, f"A{rr}", value=plab, font=BOLD, fill=GREYHDR, align=LEFT)
+        for k, fac in enumerate(real_facs):
+            col = get_column_letter(2 + k)
+            ltv_eff = f"{L36}*{fac}"
+            if is_ratio:
+                formula, fmt = f"={ltv_eff}/{pref}", RATIO
+            else:
+                formula, fmt = f"={ltv_eff}-{pref}", NETCUR
+            cell = sc(lv, f"{col}{rr}", value=formula, align=RIGHT, fmt=fmt)
+            if abs(fac - 1.0) < 1e-9:
+                cell.font = BOLD
+    return hr + 1 + 3
+
+
+e1 = ltv_block(6, "ratio")
+e2 = ltv_block(e1 + 2, "net")
+
+# breakeven callout
+br = e2 + 2
+sc(lv, f"A{br}", value="Breakeven LTV/shop needed (LTV:CAC = 1.0)  =  the payout itself:",
+   font=BOLD, align=LEFT, fill=AMBER)
+for col in ("B", "C", "D", "E", "F"):
+    sc(lv, f"{col}{br}", fill=AMBER)
+sc(lv, f"A{br+1}", value="Payout", font=SUBHDR, fill=GREYHDR, align=LEFT)
+sc(lv, f"B{br+1}", value="Breakeven LTV", font=SUBHDR, fill=GREYHDR, align=CENTER)
+sc(lv, f"C{br+1}", value="Observed LTV @36mo", font=SUBHDR, fill=GREYHDR, align=CENTER)
+sc(lv, f"D{br+1}", value="× uplift needed", font=SUBHDR, fill=GREYHDR, align=CENTER)
+for pi, (pref, plab) in enumerate(zip(payout_refs, payout_lbls)):
+    rr = br + 2 + pi
+    sc(lv, f"A{rr}", value=plab, font=BOLD, fill=GREYHDR, align=LEFT)
+    sc(lv, f"B{rr}", value=f"={pref}", align=RIGHT, fmt=CUR)
+    sc(lv, f"C{rr}", value=f"={L36}", align=RIGHT, fmt=CUR2)
+    sc(lv, f"D{rr}", value=f"={pref}/{L36}", align=RIGHT, fmt='0.00"x"')
+
+lv.column_dimensions["A"].width = 24
+for col in ("B", "C", "D", "E", "F"):
+    lv.column_dimensions[col].width = 16
+
 # ================================================================ README
 rd = wb.create_sheet("README")
 rd["A1"] = "How this workbook works"
@@ -340,6 +421,7 @@ lines = [
     "  Assumptions      – every input + source. Edit here; all other tabs recalculate.",
     "  Scenarios        – current state + 3 payouts × 2 volumes, with iCAC, LTV@12/24/36, LTV:CAC, net contribution.",
     "  IAF sensitivity  – how iCAC moves at IAF 0.38 / 0.60 / 0.75 (LTV:CAC is IAF-independent).",
+    "  LTV sensitivity  – LTV:CAC & net contribution as go-forward LTV is haircut 130%→60% of observed, plus breakeven.",
     "",
     "KEY FORMULAS",
     "  FP shops/mo    = paid trials × CVR",
@@ -363,6 +445,12 @@ lines = [
     "DEFAULTS APPLIED (per River's recommendation)",
     "  Volume unit = paid trials (49% applied directly to trials).",
     "  Headline horizon = 36 months. LTV era = 1-mo (go-forward). Geo = all-US. IAF = 0.38 (+ sensitivity tab).",
+    "",
+    "LEAD'S 'LTV DROPS WITH A 1-MO TRIAL' CONCERN — HOW IT'S HANDLED",
+    "  The go-forward LTV is the observed 1-mo-era value, which already blends in lower-intent marginal converters.",
+    "  An adjustable 'LTV realization factor' (Assumptions!B19, default 100%) lets you haircut it for extra caution,",
+    "  and the LTV sensitivity tab shows the full grid + breakeven. Key point: breakeven LTV = the payout, so at $350",
+    "  the shop would need ~2.1× its observed LTV just to break even — the conclusion holds across the whole haircut range.",
     "",
     "HEADLINE TAKEAWAY",
     "  On a straight per-shop basis the funnel is LTV-negative at all three payouts (36-mo LTV ~$165 < payout),",
