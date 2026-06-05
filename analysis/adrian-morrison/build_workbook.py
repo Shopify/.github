@@ -407,6 +407,81 @@ lv.column_dimensions["A"].width = 24
 for col in ("B", "C", "D", "E", "F"):
     lv.column_dimensions[col].width = 16
 
+# ================================================================ ALL MARKETS
+# Adrian Morrison (affiliate 3219387) per-market rate card.
+# "March rate" = the rate we would have paid in March (the New Rate column).
+# Proposed 1-month-trial rate = March rate × (1 − discount), discount default 25%.
+market_data = [
+    ("Africa", 225, 75), ("Australia", 275, 300), ("Canada", 275, 350),
+    ("China", 275, 300), ("Denmark", 225, 350), ("France", 225, 350),
+    ("Germany", 275, 350), ("Hong Kong", 225, 300), ("India", 50, 25),
+    ("Ireland", 275, 300), ("Italy", 225, 300), ("Japan", 275, 300),
+    ("Latin America", 50, 50), ("Middle East", 225, 200), ("Netherlands", 225, 300),
+    ("New Zealand", 275, 300), ("Rest of Asia", 225, 300), ("Rest of Europe", 225, 350),
+    ("Spain", 275, 300), ("United Kingdom", 275, 350), ("United States", 275, 350),
+]
+
+am = wb.create_sheet("All markets")
+am["A1"] = "Adrian Morrison — all-market rate card  (1-mo trial rate = March rate − 25%)"
+am.merge_cells("A1:K1")
+sc(am, "A1", font=TITLE, fill=DARK, align=LEFT)
+for col in "BCDEFGHIJK":
+    sc(am, f"{col}1", fill=DARK)
+
+am["A2"] = ("Discount applied to the March rate (single lever — edit B2):")
+am.merge_cells("A2:D2")
+sc(am, "A2", font=BOLD, align=LEFT, fill=GREYHDR)
+sc(am, "E2", value=0.25, fmt=PCT, align=CENTER, fill=INPUT, font=Font(bold=True, color="B71C1C"))
+HC = "'All markets'!$E$2"
+
+am["A3"] = ("Rate columns (Old / March / 1-mo) are market-specific. CVR, IAF and LTV/shop are US figures used as "
+            "PLACEHOLDERS for non-US rows (only the US row is data-backed) — replace per market when available, then "
+            "iCAC / LTV:CAC / net update automatically.")
+am.merge_cells("A3:K3")
+sc(am, "A3", font=ITAL, align=LEFT)
+
+mh = [
+    ("A", "Region", 16), ("B", "Old rate ($)", 10), ("C", "March rate ($)", 11),
+    ("D", "1-mo trial rate ($)", 12), ("E", "CVR", 8), ("F", "IAF", 8),
+    ("G", "iCAC ($)", 10), ("H", "LTV/shop @36mo ($)", 12), ("I", "LTV:CAC", 9),
+    ("J", "Net contrib/shop ($)", 12), ("K", "iCAC vs $267*", 10),
+]
+for col, label, width in mh:
+    sc(am, f"{col}5", value=label, font=SUBHDR, fill=GREYHDR, align=CENTER)
+    am.column_dimensions[col].width = width
+
+mr = 6
+for region, old, march in market_data:
+    us = region == "United States"
+    rowfill = ROWCUR if us else ROWNEW
+    sc(am, f"A{mr}", value=region, font=(BOLD if us else None), align=LEFT, fill=rowfill)
+    sc(am, f"B{mr}", value=old, fmt=CUR, align=RIGHT, fill=rowfill)
+    sc(am, f"C{mr}", value=march, fmt=CUR, align=RIGHT, fill=rowfill)
+    sc(am, f"D{mr}", value=f"=C{mr}*(1-{HC})", fmt=CUR2, align=RIGHT, fill=rowfill, font=BOLD)
+    # placeholder per-market assumptions (US-backed); editable
+    sc(am, f"E{mr}", value=0.49, fmt=PCT, align=RIGHT, fill=(rowfill if us else INPUT))
+    sc(am, f"F{mr}", value=0.38, fmt="0.00", align=RIGHT, fill=(rowfill if us else INPUT))
+    sc(am, f"G{mr}", value=f"=D{mr}*E{mr}/F{mr}", fmt=CUR, align=RIGHT, fill=rowfill)
+    sc(am, f"H{mr}", value=164.51, fmt=CUR2, align=RIGHT, fill=(rowfill if us else INPUT))
+    sc(am, f"I{mr}", value=f"=H{mr}/D{mr}", fmt=RATIO, align=RIGHT, fill=rowfill, font=BOLD)
+    sc(am, f"J{mr}", value=f"=H{mr}-D{mr}", fmt=NETCUR, align=RIGHT, fill=rowfill)
+    sc(am, f"K{mr}", value=f"=G{mr}/{TARGET}-1", fmt=PCTSIGN, align=RIGHT, fill=rowfill)
+    mr += 1
+
+note_mr = mr + 1
+for i, n in enumerate([
+    "* iCAC vs $267 uses the US target as a reference only; market-specific iCAC targets differ.",
+    "1-mo trial rate = March rate × (1 − 25%). US: $350 → $262.50; UK/Canada/Rest of Europe → $262.50; most others ($300 March) → $225.",
+    "Shayna's UK/CA scale point: those markets carry the top $350 March rate, so they hold the most absolute room (→ $262.50).",
+]):
+    cell = am[f"A{note_mr + i}"]
+    cell.value = "• " + n
+    cell.font = ITAL
+    am.merge_cells(f"A{note_mr + i}:K{note_mr + i}")
+    cell.alignment = LEFT
+
+am.freeze_panes = "B6"
+
 # ================================================================ README
 rd = wb.create_sheet("README")
 rd["A1"] = "How this workbook works"
@@ -422,6 +497,7 @@ lines = [
     "  Scenarios        – current state + 3 payouts × 2 volumes, with iCAC, LTV@12/24/36, LTV:CAC, net contribution.",
     "  IAF sensitivity  – how iCAC moves at IAF 0.38 / 0.60 / 0.75 (LTV:CAC is IAF-independent).",
     "  LTV sensitivity  – LTV:CAC & net contribution as go-forward LTV is haircut 130%→60% of observed, plus breakeven.",
+    "  All markets      – per-region rate card: 1-mo trial rate = March rate − 25%, with iCAC/LTV:CAC (US placeholders off-US).",
     "",
     "KEY FORMULAS",
     "  FP shops/mo    = paid trials × CVR",
